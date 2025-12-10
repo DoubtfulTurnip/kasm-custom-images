@@ -26,15 +26,154 @@ if theme == "Dark":
     st.markdown(
         """
         <style>
-        [data-testid="stAppViewContainer"], [data-testid="stSidebar"], .css-18e3th9 {
+        /* Main app and sidebar backgrounds */
+        [data-testid="stAppViewContainer"] {
             background-color: #0E1117 !important;
             color: #FAFAFA !important;
         }
-        div.stButton > button { background-color: #333333 !important; color: #FAFAFA !important; }
-        input, textarea, select { background-color: #1E1E1E !important; color: #FAFAFA !important; border-color: #555555 !important; }
-        ::placeholder { color: #888888 !important; }
-        label { color: #FAFAFA !important; }
-        div[role="option"] { background-color: #1E1E1E !important; color: #FAFAFA !important; }
+        [data-testid="stSidebar"] {
+            background-color: #1E1E1E !important;
+        }
+
+        /* All text elements - force white/light text */
+        .stMarkdown, .stText, p, span, div, h1, h2, h3, h4, h5, h6, label,
+        .stSelectbox label, .stNumberInput label, .stSlider label,
+        .stCheckbox label, .stRadio label, .stTextInput label,
+        [data-testid="stSidebar"] label, [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] span, [data-testid="stSidebar"] div,
+        [data-testid="stSidebar"] .stMarkdown {
+            color: #FAFAFA !important;
+        }
+
+        /* Buttons */
+        div.stButton > button {
+            background-color: #4A4A4A !important;
+            color: #FFFFFF !important;
+            border: 1px solid #666666 !important;
+        }
+        div.stButton > button:hover {
+            background-color: #5A5A5A !important;
+            border-color: #888888 !important;
+        }
+
+        /* Download buttons */
+        div.stDownloadButton > button {
+            background-color: #FF6B35 !important;
+            color: #FFFFFF !important;
+            border: 1px solid #FF8555 !important;
+        }
+        div.stDownloadButton > button:hover {
+            background-color: #FF7B45 !important;
+        }
+
+        /* Input fields */
+        input, textarea {
+            background-color: #2D2D2D !important;
+            color: #FAFAFA !important;
+            border: 1px solid #555555 !important;
+        }
+        input:focus, textarea:focus {
+            border-color: #888888 !important;
+            box-shadow: 0 0 0 1px #888888 !important;
+        }
+
+        /* Select dropdowns */
+        select, div[data-baseweb="select"] {
+            background-color: #2D2D2D !important;
+            color: #FAFAFA !important;
+        }
+        div[role="option"] {
+            background-color: #2D2D2D !important;
+            color: #FAFAFA !important;
+        }
+        div[role="option"]:hover {
+            background-color: #3D3D3D !important;
+        }
+
+        /* Multiselect tags */
+        div[data-baseweb="tag"] {
+            background-color: #FF6B35 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Placeholders */
+        ::placeholder {
+            color: #999999 !important;
+        }
+
+        /* Dataframes and tables */
+        .stDataFrame, table {
+            background-color: #1E1E1E !important;
+            color: #FAFAFA !important;
+        }
+        thead tr th {
+            background-color: #2D2D2D !important;
+            color: #FFFFFF !important;
+        }
+        tbody tr {
+            background-color: #1E1E1E !important;
+            color: #FAFAFA !important;
+        }
+        tbody tr:hover {
+            background-color: #2D2D2D !important;
+        }
+
+        /* Expanders */
+        .streamlit-expanderHeader {
+            background-color: #2D2D2D !important;
+            color: #FAFAFA !important;
+        }
+        .streamlit-expanderContent {
+            background-color: #1E1E1E !important;
+            color: #FAFAFA !important;
+        }
+
+        /* Sliders */
+        div[data-baseweb="slider"] {
+            color: #FAFAFA !important;
+        }
+        div[data-baseweb="slider"] div {
+            color: #FAFAFA !important;
+        }
+
+        /* Progress bars */
+        .stProgress > div > div {
+            background-color: #FF6B35 !important;
+        }
+
+        /* Number input increment/decrement buttons */
+        button[kind="stepUp"], button[kind="stepDown"] {
+            color: #FAFAFA !important;
+        }
+
+        /* Help tooltips */
+        .stTooltipIcon {
+            color: #AAAAAA !important;
+        }
+
+        /* Section headers in sidebar */
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4 {
+            color: #FFFFFF !important;
+        }
+
+        /* Success/Error/Warning/Info boxes text should stay readable */
+        .stSuccess {
+            background-color: #1E7B34 !important;
+            color: #FFFFFF !important;
+        }
+        .stError {
+            background-color: #C92A2A !important;
+            color: #FFFFFF !important;
+        }
+        .stWarning {
+            background-color: #F76707 !important;
+            color: #FFFFFF !important;
+        }
+        .stInfo {
+            background-color: #1971C2 !important;
+            color: #FFFFFF !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
