@@ -10,9 +10,9 @@ WORKDIR $HOME
 
 ######### Customize Container Here ###########
 
-# Create a working folder for and download the docker-compose YAML file (pinned to v0.4.1).
+# Create a working folder for and download the docker-compose YAML file (pinned to 0.4.1).
 RUN mkdir -p /epagneul && \
-    git clone --branch v0.4.1 --depth 1 https://github.com/jurelou/epagneul.git /epagneul
+    git clone --branch 0.4.1 --depth 1 https://github.com/jurelou/epagneul.git /epagneul
 
 
 RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin

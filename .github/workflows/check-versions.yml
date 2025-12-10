@@ -75,7 +75,7 @@ jobs:
       - name: Check Epagneul version
         id: epagneul
         run: |
-          CURRENT_VERSION=$(grep -oP 'v\d+\.\d+\.\d+' Epagneul-Kasm/Dockerfile | head -1)
+          CURRENT_VERSION=$(grep -oP '\d+\.\d+\.\d+' Epagneul-Kasm/Dockerfile | head -1)
           LATEST_VERSION=$(curl -s https://api.github.com/repos/jurelou/epagneul/releases/latest | jq -r .tag_name)
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
