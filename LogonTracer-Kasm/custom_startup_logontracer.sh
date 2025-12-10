@@ -12,13 +12,13 @@ notify-send -t 60000 "LogonTracer is starting" "Please wait while LogonTracer se
 CONTAINER_NAME="logontracer_$(date +%s)"
 echo "Using container name: $CONTAINER_NAME"
 
-# Run the LogonTracer container with a unique name.
+# Run the LogonTracer container with a unique name (pinned to v1.6.1).
 docker container run --name "$CONTAINER_NAME" --detach \
     --publish=7474:7474 \
     --publish=7687:7687 \
     --publish=8080:8080 \
     -e LTHOSTNAME=127.0.0.1 \
-    jpcertcc/docker-logontracer
+    jpcertcc/docker-logontracer:v1.6.1
 
 sleep 60
 

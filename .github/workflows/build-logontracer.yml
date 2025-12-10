@@ -1,0 +1,60 @@
+name: Build LogonTracer Kasm Workspace
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'LogonTracer-Kasm/**'
+      - '.github/workflows/build-logontracer.yml'
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly Sunday 2 AM UTC
+  workflow_dispatch:
+
+env:
+  REGISTRY: docker.io
+  DOCKER_HUB_USERNAME: bukshee
+  IMAGE_NAME: logontracer-kasm
+
+jobs:
+  build-workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push workspace image
+        uses: docker/build-push-action@v5
+        with:
+          context: LogonTracer-Kasm
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build summary
+        run: |
+          echo "# ✅ LogonTracer Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Image Built and Pushed:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workspace Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Features:" >> $GITHUB_STEP_SUMMARY
+          echo "- LogonTracer for Windows event log analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- Neo4j graph database visualization" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker-in-Docker configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Usage:" >> $GITHUB_STEP_SUMMARY
+          echo "Update your Kasm workspace to use: \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY

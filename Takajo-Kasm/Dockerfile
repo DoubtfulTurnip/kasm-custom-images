@@ -6,49 +6,49 @@ USER root
 RUN set -eux; \
     apt-get update; \
     apt-get remove -y --purge \
-        'firefox*' \
-        'sublime-text*' \
-        'code*' \
-        'nextcloud*' \
-        'remmina*' \
-        'onlyoffice*' \
-        'signal*' \
-        'gimp*' \
-        'zoom*' \
-        'ansible*' \
-        'telegram*' \
-        'thunderbird*' \
-        'slack*' || true; \
+    'firefox*' \
+    'sublime-text*' \
+    'code*' \
+    'nextcloud*' \
+    'remmina*' \
+    'onlyoffice*' \
+    'signal*' \
+    'gimp*' \
+    'zoom*' \
+    'ansible*' \
+    'telegram*' \
+    'thunderbird*' \
+    'slack*' || true; \
     rm -rf \
-        /ubuntu/install/firefox \
-        /ubuntu/install/sublime_text \
-        /ubuntu/install/vs_code \
-        /ubuntu/install/nextcloud \
-        /ubuntu/install/remmina \
-        /ubuntu/install/only_office \
-        /ubuntu/install/signal \
-        /ubuntu/install/gimp \
-        /ubuntu/install/zoom \
-        /ubuntu/install/ansible \
-        /ubuntu/install/telegram \
-        /ubuntu/install/thunderbird \
-        /ubuntu/install/slack; \
+    /ubuntu/install/firefox \
+    /ubuntu/install/sublime_text \
+    /ubuntu/install/vs_code \
+    /ubuntu/install/nextcloud \
+    /ubuntu/install/remmina \
+    /ubuntu/install/only_office \
+    /ubuntu/install/signal \
+    /ubuntu/install/gimp \
+    /ubuntu/install/zoom \
+    /ubuntu/install/ansible \
+    /ubuntu/install/telegram \
+    /ubuntu/install/thunderbird \
+    /ubuntu/install/slack; \
     find /usr/share/applications -type f \( \
-        -iname '*firefox*.desktop' -o \
-        -iname '*sublime*.desktop' -o \
-        -iname '*code*.desktop' -o \
-        -iname '*nextcloud*.desktop' -o \
-        -iname '*remmina*.desktop' -o \
-        -iname '*onlyoffice*.desktop' -o \
-        -iname '*signal*.desktop' -o \
-        -iname '*gimp*.desktop' -o \
-        -iname '*zoom*.desktop' -o \
-        -iname '*telegram*.desktop' -o \
-        -iname '*thunderbird*.desktop' -o \
-        -iname '*slack*.desktop' \
+    -iname '*firefox*.desktop' -o \
+    -iname '*sublime*.desktop' -o \
+    -iname '*code*.desktop' -o \
+    -iname '*nextcloud*.desktop' -o \
+    -iname '*remmina*.desktop' -o \
+    -iname '*onlyoffice*.desktop' -o \
+    -iname '*signal*.desktop' -o \
+    -iname '*gimp*.desktop' -o \
+    -iname '*zoom*.desktop' -o \
+    -iname '*telegram*.desktop' -o \
+    -iname '*thunderbird*.desktop' -o \
+    -iname '*slack*.desktop' \
     \) -delete; \
     rm -f /home/kasm-default-profile/Desktop/*.desktop \
-           /home/kasm-user/Desktop/*.desktop || true; \
+    /home/kasm-user/Desktop/*.desktop || true; \
     apt-get autoremove -y; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
@@ -61,14 +61,14 @@ WORKDIR $HOME
 # 1) Install runtime dependencies, notifications & PCRE
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      curl unzip inotify-tools python3 python3-pip python3-venv \
-      git libnotify-bin libpcre3 libpcre3-dev && \
+    curl unzip inotify-tools python3 python3-pip python3-venv \
+    git libnotify-bin libpcre3 libpcre3-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# 2) Install Hayabusa v3.3.0
+# 2) Install Hayabusa v3.7.0
 RUN curl -L \
-      https://github.com/Yamato-Security/hayabusa/releases/download/v3.3.0/hayabusa-3.3.0-lin-x64-gnu.zip \
-      -o /tmp/hayabusa.zip && \
+    https://github.com/Yamato-Security/hayabusa/releases/download/v3.7.0/hayabusa-3.7.0-lin-x64-gnu.zip \
+    -o /tmp/hayabusa.zip && \
     unzip /tmp/hayabusa.zip -d /tmp/hayabusa && \
     mv /tmp/hayabusa/*lin-x64-gnu /usr/local/bin/hayabusa && \
     chmod +x /usr/local/bin/hayabusa && \
@@ -76,14 +76,14 @@ RUN curl -L \
 
 # 3) Clone Hayabusa rules
 RUN git clone --depth=1 \
-      https://github.com/Yamato-Security/hayabusa-rules.git \
-      /opt/hayabusa-rules && \
+    https://github.com/Yamato-Security/hayabusa-rules.git \
+    /opt/hayabusa-rules && \
     ln -s /opt/hayabusa-rules "$HOME/rules"
 
 # 4) Install Takajō v2.10.0 into HOME and ensure permissions
 RUN curl -L \
-      https://github.com/Yamato-Security/takajo/releases/download/v2.10.0/takajo-2.10.0-lin-x64-gnu.zip \
-      -o /tmp/takajo.zip && \
+    https://github.com/Yamato-Security/takajo/releases/download/v2.10.0/takajo-2.10.0-lin-x64-gnu.zip \
+    -o /tmp/takajo.zip && \
     unzip /tmp/takajo.zip -d "$HOME/takajo" && \
     chmod +x "$HOME/takajo/takajo-2.10.0-lin-x64-gnu" && \
     chown -R 1000:0 "$HOME/takajo" && \
@@ -93,8 +93,8 @@ RUN curl -L \
     chmod +x /usr/local/bin/takajo && \
     rm -rf /tmp/takajo.zip
 
-RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.12.2/chainsaw_all_platforms+rules.zip" \
-         -o /tmp/chainsaw_all_platforms+rules.zip && \
+RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.13.1/chainsaw_all_platforms+rules.zip" \
+    -o /tmp/chainsaw_all_platforms+rules.zip && \
     unzip /tmp/chainsaw_all_platforms+rules.zip -d /tmp && \
     rm /tmp/chainsaw_all_platforms+rules.zip && \
     mv /tmp/chainsaw /opt/Chainsaw && \
@@ -103,13 +103,13 @@ RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.12.
     ln -s /opt/Chainsaw/sigma    "$HOME/chainsaw-sigma-rules" && \
     ln -s /opt/Chainsaw/mappings "$HOME/chainsaw-mappings"    && \
     ln -s /opt/Chainsaw/rules    "$HOME/chainsaw-rules"
-  
 
 
 
 
 
-    # 5) Prepare reports directory
+
+# 5) Prepare reports directory
 RUN mkdir -p /reports
 
 # 6) Copy custom startup script

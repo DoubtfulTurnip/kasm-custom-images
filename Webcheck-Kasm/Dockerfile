@@ -13,11 +13,11 @@ WORKDIR $HOME
 # Install prerequisites: apt-transport-https, curl, git, gnupg, wget
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        apt-transport-https \
-        curl \
-        git \
-        gnupg \
-        wget && \
+    apt-transport-https \
+    curl \
+    git \
+    gnupg \
+    wget && \
     \
     # Install Node.js v21 from Nodesource
     curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
@@ -27,8 +27,8 @@ RUN apt-get update && \
     npm install -g yarn && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone the Webcheck repository, install dependencies, and build the application
-RUN git clone https://github.com/Lissy93/web-check.git /web-check && \
+# Clone the Webcheck repository (pinned to v1.0.0), install dependencies, and build the application
+RUN git clone --branch 1.0.0 --depth 1 https://github.com/Lissy93/web-check.git /web-check && \
     cd /web-check && \
     yarn install && \
     yarn build
@@ -38,10 +38,10 @@ RUN git clone https://github.com/Lissy93/web-check.git /web-check && \
 COPY custom_startup_webcheck.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 
-# Optimize the desktop environment for a single application. This copies single-app configurations 
+# Optimize the desktop environment for a single application. This copies single-app configurations
 # and removes the XFCE panel so that only the Webcheck app is visible.
 RUN cp $HOME/.config/xfce4/xfconf/single-application-xfce-perchannel-xml/* \
-       $HOME/.config/xfce4/xfconf/xfce-perchannel-xml/ && \
+    $HOME/.config/xfce4/xfconf/xfce-perchannel-xml/ && \
     cp /usr/share/backgrounds/bg_kasm.png /usr/share/backgrounds/bg_default.png && \
     apt-get remove -y xfce4-panel
 
