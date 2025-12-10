@@ -1,11 +1,11 @@
-name: Build LogonTracer Kasm Workspace
+name: Build Epagneul Kasm Workspace (Runtime Build)
 
 on:
   push:
     branches: [ main, master ]
     paths:
-      - 'LogonTracer-Kasm/**'
-      - '.github/workflows/build-logontracer.yml'
+      - 'Epagneul-Kasm/**'
+      - '.github/workflows/build-epagneul.yml'
   schedule:
     - cron: '0 2 * * 0'  # Weekly Sunday 2 AM UTC
   workflow_dispatch:
@@ -13,7 +13,7 @@ on:
 env:
   REGISTRY: docker.io
   DOCKER_HUB_USERNAME: bukshee
-  IMAGE_NAME: logontracer-kasm
+  IMAGE_NAME: epagneul-kasm
 
 jobs:
   build-workspace:
@@ -35,7 +35,7 @@ jobs:
       - name: Build and push workspace image
         uses: docker/build-push-action@v5
         with:
-          context: LogonTracer-Kasm
+          context: Epagneul-Kasm
           platforms: linux/amd64
           push: true
           tags: |
@@ -46,15 +46,15 @@ jobs:
 
       - name: Build summary
         run: |
-          echo "# ✅ LogonTracer Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "# ✅ Epagneul Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📦 Image Built and Pushed:" >> $GITHUB_STEP_SUMMARY
           echo "- **Workspace Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🚀 Features:" >> $GITHUB_STEP_SUMMARY
-          echo "- LogonTracer for Windows event log analysis" >> $GITHUB_STEP_SUMMARY
-          echo "- Neo4j graph database visualization" >> $GITHUB_STEP_SUMMARY
+          echo "- Epagneul DFIR tool" >> $GITHUB_STEP_SUMMARY
           echo "- Docker-in-Docker configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- Pinned to v0.4.1" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📋 Usage:" >> $GITHUB_STEP_SUMMARY
           echo "Update your Kasm workspace to use: \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.17.0\`" >> $GITHUB_STEP_SUMMARY

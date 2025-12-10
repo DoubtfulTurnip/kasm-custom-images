@@ -33,14 +33,6 @@ updates:
       - "docker"
 
   - package-ecosystem: "docker"
-    directory: "/LogonTracer-Kasm"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "docker"
-
-  - package-ecosystem: "docker"
     directory: "/SherlockWebUI-Kasm"
     schedule:
       interval: "weekly"

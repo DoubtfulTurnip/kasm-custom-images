@@ -48,18 +48,6 @@ jobs:
             echo "::notice::Webcheck update available: $CURRENT_VERSION → $LATEST_VERSION"
           fi
 
-      - name: Check LogonTracer version
-        id: logontracer
-        run: |
-          CURRENT_VERSION=$(grep -oP 'v\d+\.\d+\.\d+' LogonTracer-Kasm/custom_startup_logontracer.sh | head -1)
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/JPCERTCC/LogonTracer/releases/latest | jq -r .tag_name)
-          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
-          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
-            echo "update_available=true" >> $GITHUB_OUTPUT
-            echo "::notice::LogonTracer update available: $CURRENT_VERSION → $LATEST_VERSION"
-          fi
-
       - name: Check Hayabusa version (Takajo component)
         id: hayabusa
         run: |
@@ -121,7 +109,6 @@ jobs:
           echo "| Trufflehog | ${{ steps.trufflehog.outputs.current }} | ${{ steps.trufflehog.outputs.latest }} | ${{ steps.trufflehog.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SocialAnalyzer | ${{ steps.socialanalyzer.outputs.current }} | ${{ steps.socialanalyzer.outputs.latest }} | ${{ steps.socialanalyzer.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Webcheck | ${{ steps.webcheck.outputs.current }} | ${{ steps.webcheck.outputs.latest }} | ${{ steps.webcheck.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| LogonTracer | ${{ steps.logontracer.outputs.current }} | ${{ steps.logontracer.outputs.latest }} | ${{ steps.logontracer.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Hayabusa | ${{ steps.hayabusa.outputs.current }} | ${{ steps.hayabusa.outputs.latest }} | ${{ steps.hayabusa.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Chainsaw | ${{ steps.chainsaw.outputs.current }} | ${{ steps.chainsaw.outputs.latest }} | ${{ steps.chainsaw.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Epagneul | ${{ steps.epagneul.outputs.current }} | ${{ steps.epagneul.outputs.latest }} | ${{ steps.epagneul.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
