@@ -82,12 +82,38 @@ if theme == "Dark":
             background-color: #2D2D2D !important;
             color: #FAFAFA !important;
         }
+
+        /* Dropdown menu container */
+        div[data-baseweb="popover"] {
+            background-color: #2D2D2D !important;
+        }
+
+        /* Dropdown options */
         div[role="option"] {
             background-color: #2D2D2D !important;
             color: #FAFAFA !important;
         }
         div[role="option"]:hover {
-            background-color: #3D3D3D !important;
+            background-color: #FF6B35 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Fix Streamlit's default white text on option elements */
+        li[role="option"] span {
+            color: #FAFAFA !important;
+        }
+        li[role="option"]:hover span {
+            color: #FFFFFF !important;
+        }
+
+        /* Dropdown list container */
+        ul[role="listbox"] {
+            background-color: #2D2D2D !important;
+        }
+
+        /* Selected option text */
+        div[data-baseweb="select"] > div {
+            color: #FAFAFA !important;
         }
 
         /* Multiselect tags */
