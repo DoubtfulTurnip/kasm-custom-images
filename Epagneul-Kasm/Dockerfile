@@ -1,5 +1,5 @@
 FROM kasmweb/ubuntu-noble-dind:1.17.0
- 
+
 USER root
 
 # Set Kasm environment variables
@@ -10,14 +10,14 @@ WORKDIR $HOME
 
 ######### Customize Container Here ###########
 
-# Create a working folder for and download the docker-compose YAML file.
+# Create a working folder for and download the docker-compose YAML file (pinned to 0.4.1).
 RUN mkdir -p /epagneul && \
-    git clone https://github.com/jurelou/epagneul.git /epagneul
-    
+    git clone --branch 0.4.1 --depth 1 https://github.com/jurelou/epagneul.git /epagneul
+
 
 RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin
 
-    
+
 # Copy the custom startup script into the container.
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
@@ -34,4 +34,3 @@ WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
 USER 1000
-

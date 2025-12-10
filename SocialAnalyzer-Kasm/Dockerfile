@@ -9,14 +9,14 @@ WORKDIR $HOME
 # Install only Git, curl, and the Docker Compose plugin
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      git \
-      curl \
-      docker-compose-plugin && \
+    git \
+    curl \
+    docker-compose-plugin && \
     rm -rf /var/lib/apt/lists/*
 
 
-# Clone the entire Social-Analyzer repo (includes docker-compose.yml)
-RUN git clone https://github.com/qeeqbox/social-analyzer.git /opt/social-analyzer && \
+# Clone the entire Social-Analyzer repo (includes docker-compose.yml) - using main branch (no releases available)
+RUN git clone --depth 1 https://github.com/qeeqbox/social-analyzer.git /opt/social-analyzer && \
     chown -R 1000:0 /opt/social-analyzer
 
 # Copy in our custom startup script and rename it to custom_startup.sh

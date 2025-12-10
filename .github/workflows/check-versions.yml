@@ -1,0 +1,118 @@
+name: Check Upstream Versions
+
+on:
+  schedule:
+    - cron: "0 0 * * 1" # Weekly on Monday at midnight UTC
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  check-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Trufflehog version
+        id: trufflehog
+        run: |
+          CURRENT_VERSION=$(grep -oP 'v\d+\.\d+\.\d+' Trufflehog-Kasm/Dockerfile | head -1)
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/trufflesecurity/trufflehog/releases/latest | jq -r .tag_name)
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Trufflehog update available: $CURRENT_VERSION → $LATEST_VERSION"
+          fi
+
+      - name: Check SocialAnalyzer version
+        id: socialanalyzer
+        run: |
+          CURRENT_VERSION=$(grep -oP 'v\d+\.\d+' SocialAnalyzer-Kasm/Dockerfile | head -1)
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/qeeqbox/social-analyzer/releases/latest | jq -r .tag_name)
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::SocialAnalyzer update available: $CURRENT_VERSION → $LATEST_VERSION"
+          fi
+
+      - name: Check Webcheck version
+        id: webcheck
+        run: |
+          CURRENT_VERSION=$(grep -oP 'branch \K\d+\.\d+\.\d+' Webcheck-Kasm/Dockerfile | head -1)
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/Lissy93/web-check/releases/latest | jq -r .tag_name)
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Webcheck update available: $CURRENT_VERSION → $LATEST_VERSION"
+          fi
+
+      - name: Check Hayabusa version (Takajo component)
+        id: hayabusa
+        run: |
+          CURRENT_VERSION=$(grep -oP 'hayabusa/releases/download/v\K\d+\.\d+\.\d+' Takajo-Kasm/Dockerfile | head -1)
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/Yamato-Security/hayabusa/releases/latest | jq -r .tag_name | sed 's/^v//')
+          echo "current=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=v$LATEST_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Hayabusa update available: v$CURRENT_VERSION → v$LATEST_VERSION"
+          fi
+
+      - name: Check Chainsaw version (Takajo component)
+        id: chainsaw
+        run: |
+          CURRENT_VERSION=$(grep -oP 'chainsaw/releases/download/v\K\d+\.\d+\.\d+' Takajo-Kasm/Dockerfile | head -1)
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/WithSecureLabs/chainsaw/releases/latest | jq -r .tag_name | sed 's/^v//')
+          echo "current=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=v$LATEST_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Chainsaw update available: v$CURRENT_VERSION → v$LATEST_VERSION"
+          fi
+
+      - name: Check Epagneul version
+        id: epagneul
+        run: |
+          CURRENT_VERSION=$(grep -oP '\d+\.\d+\.\d+' Epagneul-Kasm/Dockerfile | head -1)
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/jurelou/epagneul/releases/latest | jq -r .tag_name)
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Epagneul update available: $CURRENT_VERSION → $LATEST_VERSION"
+          fi
+
+      - name: Check Slasher commits
+        id: slasher
+        run: |
+          CURRENT_COMMIT=$(grep -oP 'git checkout \K[a-f0-9]{40}' Slasher-Kasm/Dockerfile | head -1)
+          LATEST_COMMIT=$(curl -s https://api.github.com/repos/hexastrike/slasher/commits/main | jq -r .sha)
+          CURRENT_SHORT="${CURRENT_COMMIT:0:7}"
+          LATEST_SHORT="${LATEST_COMMIT:0:7}"
+          echo "current=$CURRENT_SHORT" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_SHORT" >> $GITHUB_OUTPUT
+          echo "current_full=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
+          echo "latest_full=$LATEST_COMMIT" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Slasher update available: $CURRENT_SHORT → $LATEST_SHORT"
+          fi
+
+      - name: Create summary
+        run: |
+          echo "# 🔍 Version Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Application | Current | Latest | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|---------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Trufflehog | ${{ steps.trufflehog.outputs.current }} | ${{ steps.trufflehog.outputs.latest }} | ${{ steps.trufflehog.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| SocialAnalyzer | ${{ steps.socialanalyzer.outputs.current }} | ${{ steps.socialanalyzer.outputs.latest }} | ${{ steps.socialanalyzer.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Webcheck | ${{ steps.webcheck.outputs.current }} | ${{ steps.webcheck.outputs.latest }} | ${{ steps.webcheck.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Hayabusa | ${{ steps.hayabusa.outputs.current }} | ${{ steps.hayabusa.outputs.latest }} | ${{ steps.hayabusa.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Chainsaw | ${{ steps.chainsaw.outputs.current }} | ${{ steps.chainsaw.outputs.latest }} | ${{ steps.chainsaw.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Epagneul | ${{ steps.epagneul.outputs.current }} | ${{ steps.epagneul.outputs.latest }} | ${{ steps.epagneul.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Slasher | ${{ steps.slasher.outputs.current }} | ${{ steps.slasher.outputs.latest }} | ${{ steps.slasher.outputs.update_available == 'true' && '🔄 Update Available' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** This workflow currently only checks for updates. Manual PR creation required for version updates." >> $GITHUB_STEP_SUMMARY
+          echo "**TODO:** Implement automatic PR creation when updates are detected." >> $GITHUB_STEP_SUMMARY

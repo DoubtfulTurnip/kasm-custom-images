@@ -12,22 +12,25 @@ WORKDIR $HOME
 # 1) Install OS packages, clone Slasher & seed backend/.env
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      apt-transport-https \
-      curl \
-      git \
-      gnupg \
-      wget \
-      python3 \
-      python3-pip \
-      zenity \
-      docker-compose && \
+    apt-transport-https \
+    curl \
+    git \
+    gnupg \
+    wget \
+    python3 \
+    python3-pip \
+    zenity \
+    docker-compose && \
     rm -rf /var/lib/apt/lists/* && \
     git clone https://github.com/hexastrike/slasher.git /opt/slasher && \
+    cd /opt/slasher && \
+    git checkout 47ce2295153c7abe3f6b09bcb31885c617ec60f2 && \
+    cd / && \
     cp /opt/slasher/template.env /opt/slasher/backend/.env
 
 # 2) Install Python dependencies
 RUN pip3 install --break-system-packages --no-cache-dir \
-      -r /opt/slasher/backend/requirements.txt
+    -r /opt/slasher/backend/requirements.txt
 
 # 3) Generate a Django SECRET_KEY at build-time and inject into both env files
 RUN SECRET_KEY="$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')" && \
