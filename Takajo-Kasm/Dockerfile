@@ -1,4 +1,4 @@
-FROM kasmweb/ubuntu-noble-desktop:1.17.0
+FROM kasmweb/ubuntu-noble-desktop:1.18.0
 
 USER root
 
