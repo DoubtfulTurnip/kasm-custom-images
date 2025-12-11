@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT || github.token }}
 
       - name: Check Trufflehog version
         id: trufflehog
@@ -125,74 +127,67 @@ jobs:
       - name: Commit and push changes
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Create detailed commit message
-          COMMIT_MSG="chore: Auto-update application versions
-
-Updated versions:"
+          # Build commit message
+          echo "chore: Auto-update application versions" > commit_msg.txt
+          echo "" >> commit_msg.txt
+          echo "Updated versions:" >> commit_msg.txt
 
           if [ "${{ steps.trufflehog.outputs.update_available }}" == "true" ]; then
-            COMMIT_MSG="$COMMIT_MSG
-- Trufflehog: ${{ steps.trufflehog.outputs.current }} → ${{ steps.trufflehog.outputs.latest }}"
+            echo "- Trufflehog: ${{ steps.trufflehog.outputs.current }} to ${{ steps.trufflehog.outputs.latest }}" >> commit_msg.txt
           fi
 
           if [ "${{ steps.webcheck.outputs.update_available }}" == "true" ]; then
-            COMMIT_MSG="$COMMIT_MSG
-- Webcheck: ${{ steps.webcheck.outputs.current }} → ${{ steps.webcheck.outputs.latest }}"
+            echo "- Webcheck: ${{ steps.webcheck.outputs.current }} to ${{ steps.webcheck.outputs.latest }}" >> commit_msg.txt
           fi
 
           if [ "${{ steps.hayabusa.outputs.update_available }}" == "true" ]; then
-            COMMIT_MSG="$COMMIT_MSG
-- Hayabusa: ${{ steps.hayabusa.outputs.current }} → ${{ steps.hayabusa.outputs.latest }}"
+            echo "- Hayabusa: ${{ steps.hayabusa.outputs.current }} to ${{ steps.hayabusa.outputs.latest }}" >> commit_msg.txt
           fi
 
           if [ "${{ steps.chainsaw.outputs.update_available }}" == "true" ]; then
-            COMMIT_MSG="$COMMIT_MSG
-- Chainsaw: ${{ steps.chainsaw.outputs.current }} → ${{ steps.chainsaw.outputs.latest }}"
+            echo "- Chainsaw: ${{ steps.chainsaw.outputs.current }} to ${{ steps.chainsaw.outputs.latest }}" >> commit_msg.txt
           fi
 
           if [ "${{ steps.epagneul.outputs.update_available }}" == "true" ]; then
-            COMMIT_MSG="$COMMIT_MSG
-- Epagneul: ${{ steps.epagneul.outputs.current }} → ${{ steps.epagneul.outputs.latest }}"
+            echo "- Epagneul: ${{ steps.epagneul.outputs.current }} to ${{ steps.epagneul.outputs.latest }}" >> commit_msg.txt
           fi
 
           if [ "${{ steps.slasher.outputs.update_available }}" == "true" ]; then
-            COMMIT_MSG="$COMMIT_MSG
-- Slasher: ${{ steps.slasher.outputs.current }} → ${{ steps.slasher.outputs.latest }}"
+            echo "- Slasher: ${{ steps.slasher.outputs.current }} to ${{ steps.slasher.outputs.latest }}" >> commit_msg.txt
           fi
 
-          COMMIT_MSG="$COMMIT_MSG
-
-Automated update by check-versions workflow"
+          echo "" >> commit_msg.txt
+          echo "Automated update by check-versions workflow" >> commit_msg.txt
 
           git add -A
-          git commit -m "$COMMIT_MSG"
+          git commit -F commit_msg.txt
           git push
 
       - name: Create summary
         run: |
-          echo "# 🔍 Version Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "# Version Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Application | Current | Latest | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|------------|---------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Trufflehog | ${{ steps.trufflehog.outputs.current }} | ${{ steps.trufflehog.outputs.latest }} | ${{ steps.trufflehog.outputs.update_available == 'true' && '🔄 Auto-Updated' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| SocialAnalyzer | ${{ steps.socialanalyzer.outputs.current }} | ${{ steps.socialanalyzer.outputs.latest }} | ✅ Uses Main Branch |" >> $GITHUB_STEP_SUMMARY
-          echo "| Webcheck | ${{ steps.webcheck.outputs.current }} | ${{ steps.webcheck.outputs.latest }} | ${{ steps.webcheck.outputs.update_available == 'true' && '🔄 Auto-Updated' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Hayabusa | ${{ steps.hayabusa.outputs.current }} | ${{ steps.hayabusa.outputs.latest }} | ${{ steps.hayabusa.outputs.update_available == 'true' && '🔄 Auto-Updated' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Chainsaw | ${{ steps.chainsaw.outputs.current }} | ${{ steps.chainsaw.outputs.latest }} | ${{ steps.chainsaw.outputs.update_available == 'true' && '🔄 Auto-Updated' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Epagneul | ${{ steps.epagneul.outputs.current }} | ${{ steps.epagneul.outputs.latest }} | ${{ steps.epagneul.outputs.update_available == 'true' && '🔄 Auto-Updated' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Slasher | ${{ steps.slasher.outputs.current }} | ${{ steps.slasher.outputs.latest }} | ${{ steps.slasher.outputs.update_available == 'true' && '🔄 Auto-Updated' || '✅ Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trufflehog | ${{ steps.trufflehog.outputs.current }} | ${{ steps.trufflehog.outputs.latest }} | ${{ steps.trufflehog.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| SocialAnalyzer | ${{ steps.socialanalyzer.outputs.current }} | ${{ steps.socialanalyzer.outputs.latest }} | Uses Main Branch |" >> $GITHUB_STEP_SUMMARY
+          echo "| Webcheck | ${{ steps.webcheck.outputs.current }} | ${{ steps.webcheck.outputs.latest }} | ${{ steps.webcheck.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Hayabusa | ${{ steps.hayabusa.outputs.current }} | ${{ steps.hayabusa.outputs.latest }} | ${{ steps.hayabusa.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Chainsaw | ${{ steps.chainsaw.outputs.current }} | ${{ steps.chainsaw.outputs.latest }} | ${{ steps.chainsaw.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Epagneul | ${{ steps.epagneul.outputs.current }} | ${{ steps.epagneul.outputs.latest }} | ${{ steps.epagneul.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Slasher | ${{ steps.slasher.outputs.current }} | ${{ steps.slasher.outputs.latest }} | ${{ steps.slasher.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
-            echo "## ✅ Automatic Updates Applied" >> $GITHUB_STEP_SUMMARY
+            echo "## Automatic Updates Applied" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Dockerfiles have been automatically updated and committed." >> $GITHUB_STEP_SUMMARY
             echo "Build workflows will automatically trigger to rebuild and push updated containers to Docker Hub." >> $GITHUB_STEP_SUMMARY
           else
-            echo "## ✅ All Applications Up to Date" >> $GITHUB_STEP_SUMMARY
+            echo "## All Applications Up to Date" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "No updates were needed. All applications are running the latest versions." >> $GITHUB_STEP_SUMMARY
           fi

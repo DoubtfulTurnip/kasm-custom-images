@@ -2,6 +2,16 @@
 
 Source files for my custom [Kasm](https://www.kasmweb.com/) containers. Feel free to modify and customise. I have also enabled my own 3rd party Kasm Workspace Registry.
 
+## 🤖 Automated Updates
+
+This repository features **fully automated version monitoring and updates**. Every week, GitHub Actions automatically:
+- Checks for new releases of all applications
+- Updates Dockerfiles when new versions are available
+- Commits and pushes changes automatically
+- Triggers Docker builds and pushes to Docker Hub
+
+**Setup required**: See [AUTOMATED_UPDATES_SETUP.md](AUTOMATED_UPDATES_SETUP.md) for configuration instructions.
+
 
 ## Dockerfile
 

@@ -1,0 +1,17 @@
+[theme]
+primaryColor = "#FF6B35"
+backgroundColor = "#1E1E1E"
+secondaryBackgroundColor = "#2A2A2A"
+textColor = "#E8E8E8"
+font = "sans serif"
+
+[theme.sidebar]
+widgetBackgroundColor = "#353535"
+widgetBorderColor = "#555555"
+skeletonBackgroundColor = "#2A2A2A"
+
+[server]
+headless = true
+port = 5000
+enableCORS = false
+enableXsrfProtection = true

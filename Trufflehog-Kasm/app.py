@@ -12,27 +12,53 @@ import tldextract
 from bs4 import BeautifulSoup
 
 # Page configuration
-st.set_page_config(page_title="Trufflehog WebUI", layout="wide")
+st.set_page_config(
+    page_title="Trufflehog WebUI", layout="wide", page_icon="trufflehog-icon.png"
+)
+
+# History file path
+HISTORY_FILE = os.path.expanduser("~/trufflehog_scan_history.json")
+
+
+# Load scan history from file
+def load_history():
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+
+# Save scan history to file
+def save_history_to_file(history):
+    try:
+        with open(HISTORY_FILE, "w") as f:
+            json.dump(history, f)
+    except:
+        pass
+
 
 # Initialize session state for scan history
 if "scan_history" not in st.session_state:
-    st.session_state.scan_history = []
+    st.session_state.scan_history = load_history()
 if "current_results" not in st.session_state:
     st.session_state.current_results = None
 
-# Theme selection
-theme = st.sidebar.selectbox("Theme:", ["Light", "Dark"], index=1)
+# Apply dark theme CSS overrides
+theme = "Dark"
 if theme == "Dark":
     st.markdown(
         """
         <style>
-        /* Main app and sidebar backgrounds */
+        /* Main app and sidebar backgrounds - softer dark theme */
         [data-testid="stAppViewContainer"] {
-            background-color: #0E1117 !important;
-            color: #FAFAFA !important;
+            background-color: #1E1E1E !important;
+            color: #E8E8E8 !important;
         }
         [data-testid="stSidebar"] {
-            background-color: #1E1E1E !important;
+            background-color: #2A2A2A !important;
         }
 
         /* All text elements - force white/light text */
@@ -41,7 +67,22 @@ if theme == "Dark":
         .stCheckbox label, .stRadio label, .stTextInput label,
         [data-testid="stSidebar"] label, [data-testid="stSidebar"] p,
         [data-testid="stSidebar"] span, [data-testid="stSidebar"] div,
-        [data-testid="stSidebar"] .stMarkdown {
+        [data-testid="stSidebar"] .stMarkdown,
+        [data-testid="stSidebar"] * {
+            color: #FAFAFA !important;
+        }
+
+        /* Force all sidebar elements including icons */
+        [data-testid="stSidebar"] svg {
+            color: #FAFAFA !important;
+            fill: #FAFAFA !important;
+        }
+
+        /* Override Streamlit's default text colors in sidebar */
+        [data-testid="stSidebar"] .css-1v0mbdj,
+        [data-testid="stSidebar"] .css-10trblm,
+        section[data-testid="stSidebar"] small,
+        section[data-testid="stSidebar"] .stText {
             color: #FAFAFA !important;
         }
 
@@ -68,8 +109,8 @@ if theme == "Dark":
 
         /* Input fields */
         input, textarea {
-            background-color: #2D2D2D !important;
-            color: #FAFAFA !important;
+            background-color: #353535 !important;
+            color: #E8E8E8 !important;
             border: 1px solid #555555 !important;
         }
         input:focus, textarea:focus {
@@ -79,19 +120,26 @@ if theme == "Dark":
 
         /* Select dropdowns */
         select, div[data-baseweb="select"] {
-            background-color: #2D2D2D !important;
-            color: #FAFAFA !important;
+            background-color: #353535 !important;
+            color: #E8E8E8 !important;
+        }
+
+        /* Force dropdown selected value text to be visible */
+        div[data-baseweb="select"] span,
+        div[data-baseweb="select"] div,
+        [data-baseweb="select"] * {
+            color: #E8E8E8 !important;
         }
 
         /* Dropdown menu container */
         div[data-baseweb="popover"] {
-            background-color: #2D2D2D !important;
+            background-color: #353535 !important;
         }
 
         /* Dropdown options */
         div[role="option"] {
-            background-color: #2D2D2D !important;
-            color: #FAFAFA !important;
+            background-color: #353535 !important;
+            color: #E8E8E8 !important;
         }
         div[role="option"]:hover {
             background-color: #FF6B35 !important;
@@ -108,12 +156,12 @@ if theme == "Dark":
 
         /* Dropdown list container */
         ul[role="listbox"] {
-            background-color: #2D2D2D !important;
+            background-color: #353535 !important;
         }
 
         /* Selected option text */
         div[data-baseweb="select"] > div {
-            color: #FAFAFA !important;
+            color: #E8E8E8 !important;
         }
 
         /* Multiselect tags */
@@ -129,29 +177,29 @@ if theme == "Dark":
 
         /* Dataframes and tables */
         .stDataFrame, table {
-            background-color: #1E1E1E !important;
-            color: #FAFAFA !important;
+            background-color: #2A2A2A !important;
+            color: #E8E8E8 !important;
         }
         thead tr th {
-            background-color: #2D2D2D !important;
+            background-color: #353535 !important;
             color: #FFFFFF !important;
         }
         tbody tr {
-            background-color: #1E1E1E !important;
-            color: #FAFAFA !important;
+            background-color: #2A2A2A !important;
+            color: #E8E8E8 !important;
         }
         tbody tr:hover {
-            background-color: #2D2D2D !important;
+            background-color: #353535 !important;
         }
 
         /* Expanders */
         .streamlit-expanderHeader {
-            background-color: #2D2D2D !important;
-            color: #FAFAFA !important;
+            background-color: #353535 !important;
+            color: #E8E8E8 !important;
         }
         .streamlit-expanderContent {
-            background-color: #1E1E1E !important;
-            color: #FAFAFA !important;
+            background-color: #2A2A2A !important;
+            color: #E8E8E8 !important;
         }
 
         /* Sliders */
@@ -205,7 +253,14 @@ if theme == "Dark":
         unsafe_allow_html=True,
     )
 
-st.title("🔍 Trufflehog WebUI")
+# Display title with Trufflehog icon
+col1, col2 = st.columns([0.08, 0.92])
+with col1:
+    st.image("trufflehog-icon.png", width=60)
+with col2:
+    st.markdown(
+        "<h1 style='margin-top: 10px;'>Trufflehog WebUI</h1>", unsafe_allow_html=True
+    )
 
 # Sidebar: Advanced Settings
 st.sidebar.markdown("---")
@@ -419,6 +474,8 @@ def save_to_history(scan_mode, records):
             "results": records,
         }
     )
+    # Persist to file
+    save_history_to_file(st.session_state.scan_history)
 
 
 # Main logic
@@ -799,10 +856,13 @@ elif scan_mode == "HuggingFace Scan":
         records = run_trufflehog(cmd, output_path)
         save_to_history(scan_mode, records)
 
-# Use current_results from session state if available (from history click)
-if st.session_state.current_results is not None and records is None:
+# Store new scan results in session state
+if records is not None:
+    st.session_state.current_results = records
+
+# Always use results from session state for display (persists across reruns)
+if st.session_state.current_results is not None:
     records = st.session_state.current_results
-    st.session_state.current_results = None  # Clear after using
 
 # Display results with filtering
 if records is not None:
@@ -811,7 +871,7 @@ if records is not None:
     else:
         # Result filtering
         st.markdown("---")
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             filter_verified = st.multiselect(
@@ -821,60 +881,140 @@ if records is not None:
             )
 
         with col2:
-            detector_names = list(
-                set(r.get("DetectorName", "Unknown") for r in records)
+            detector_names = sorted(
+                list(set(r.get("DetectorName", "Unknown") for r in records))
             )
             filter_detector = st.multiselect(
-                "Filter by Detector:", ["All"] + detector_names, default=["All"]
+                "Filter by Detector:",
+                options=detector_names,
+                default=detector_names,  # All selected by default
+                help="Select one or more detector types to filter results",
             )
 
         with col3:
-            source_names = list(set(r.get("SourceName", "Unknown") for r in records))
-            filter_source = st.multiselect(
-                "Filter by Source:", ["All"] + source_names, default=["All"]
-            )
-
-        with col4:
             st.markdown("**Export Results:**")
             export_col1, export_col2 = st.columns(2)
 
         # Apply filters
         filtered_records = records
-        if "Verified" not in filter_verified:
-            filtered_records = [
-                r for r in filtered_records if not r.get("Verified", False)
-            ]
-        if "Unverified" not in filter_verified:
-            filtered_records = [r for r in filtered_records if r.get("Verified", False)]
-        if "All" not in filter_detector:
+
+        # Filter by verification status
+        if len(filter_verified) > 0 and len(filter_verified) < 2:
+            # Only one option selected
+            if "Verified" in filter_verified:
+                filtered_records = [
+                    r for r in filtered_records if r.get("Verified", False)
+                ]
+            else:  # Only "Unverified" selected
+                filtered_records = [
+                    r for r in filtered_records if not r.get("Verified", False)
+                ]
+        # If both or neither selected, show all records
+
+        # Filter by detector type
+        if len(filter_detector) > 0:
             filtered_records = [
                 r
                 for r in filtered_records
                 if r.get("DetectorName", "Unknown") in filter_detector
             ]
-        if "All" not in filter_source:
-            filtered_records = [
-                r
-                for r in filtered_records
-                if r.get("SourceName", "Unknown") in filter_source
-            ]
 
-        st.subheader(
-            f"Summary of Results (Showing {len(filtered_records)} of {len(records)})"
+        # Reset to page 1 if filters changed
+        if "last_filter_state" not in st.session_state:
+            st.session_state.last_filter_state = (filter_verified, filter_detector)
+
+        current_filter_state = (tuple(filter_verified), tuple(filter_detector))
+        if st.session_state.last_filter_state != current_filter_state:
+            st.session_state.page_number = 1
+            st.session_state.last_filter_state = current_filter_state
+
+        # Pagination settings
+        results_per_page = st.selectbox(
+            "Results per page:",
+            options=[10, 25, 50, 100, 200],
+            index=2,  # Default to 50
+            help="Select how many results to display per page",
         )
 
-        # Create summary dataframe
-        rows = [
-            {
-                "SourceName": r.get("SourceName", ""),
-                "DetectorName": r.get("DetectorName", ""),
-                "Verified": "✅" if r.get("Verified") else "❌",
-                "Raw": (r.get("Raw", "")[:30] + "...") if r.get("Raw") else "",
-            }
-            for r in filtered_records
-        ]
-        df = pd.DataFrame(rows)
-        st.dataframe(df, use_container_width=True)
+        total_results = len(filtered_records)
+        total_pages = (total_results + results_per_page - 1) // results_per_page
+
+        # Initialize page number in session state
+        if "page_number" not in st.session_state:
+            st.session_state.page_number = 1
+
+        st.subheader(
+            f"Scan Results (Showing {len(filtered_records)} of {len(records)})"
+        )
+
+        # Add verification status explanation
+        with st.expander("ℹ️ Understanding Results", expanded=False):
+            st.markdown("""
+            **Verification Status:**
+            - **VERIFIED ✅** - The secret was tested and confirmed to be valid/active. This is a real, working credential.
+            - **Unverified ⚠️** - The secret was detected but not verified. It may be valid, expired, or a false positive.
+
+            **Detector** - The type of secret found (e.g., AWS, GitHub, API Key)
+
+            **Source** - Where the secret was found (e.g., file path, repository, URL)
+            """)
+
+        # Create summary dataframe for current page
+        start_idx = (st.session_state.page_number - 1) * results_per_page
+        end_idx = min(start_idx + results_per_page, total_results)
+        current_page_records = filtered_records[start_idx:end_idx]
+
+        # Display results with expandable details
+        for i, r in enumerate(current_page_records, start=start_idx):
+            verified = r.get("Verified", False)
+            verified_status = "VERIFIED ✅" if verified else "Unverified ⚠️"
+            detector = r.get("DetectorName", "Unknown")
+            source = r.get("SourceName", "")
+
+            # Create human-readable summary
+            summary = (
+                f"#{i + 1} — {verified_status} — {detector} secret — Source: {source}"
+            )
+
+            with st.expander(summary, expanded=False):
+                col1, col2 = st.columns([1, 3])
+
+                with col1:
+                    st.markdown("**Details:**")
+                    st.write(f"**Detector:** {detector}")
+                    st.write(f"**Verified:** {verified_status}")
+                    st.write(f"**Source:** {source}")
+                    if r.get("SourceType"):
+                        st.write(f"**Source Type:** {r.get('SourceType')}")
+
+                with col2:
+                    st.markdown("**Secret Value:**")
+                    st.code(r.get("Raw", ""), language="text")
+
+                    if r.get("RawV2"):
+                        st.markdown("**Additional Data:**")
+                        st.code(r.get("RawV2", ""), language="text")
+
+                st.markdown("---")
+                st.markdown("**Full JSON Data:**")
+                st.json(r)
+
+        # Pagination controls
+        col_prev, col_info, col_next = st.columns([1, 2, 1])
+        with col_prev:
+            if st.button("⬅️ Previous", disabled=(st.session_state.page_number == 1)):
+                st.session_state.page_number -= 1
+                st.rerun()
+        with col_info:
+            st.markdown(
+                f"**Page {st.session_state.page_number} of {total_pages}** (Showing {start_idx + 1}-{end_idx} of {total_results})"
+            )
+        with col_next:
+            if st.button(
+                "Next ➡️", disabled=(st.session_state.page_number >= total_pages)
+            ):
+                st.session_state.page_number += 1
+                st.rerun()
 
         # Export buttons
         with export_col1:
@@ -888,19 +1028,23 @@ if records is not None:
             )
 
         with export_col2:
-            csv_data = df.to_csv(index=False)
+            # Create CSV from filtered records
+            csv_rows = [
+                {
+                    "Verified": "✅" if r.get("Verified") else "❌",
+                    "DetectorName": r.get("DetectorName", ""),
+                    "SourceName": r.get("SourceName", ""),
+                    "SourceType": r.get("SourceType", ""),
+                    "Raw": r.get("Raw", ""),
+                }
+                for r in filtered_records
+            ]
+            csv_df = pd.DataFrame(csv_rows)
+            csv_data = csv_df.to_csv(index=False)
             st.download_button(
                 "📥 Download CSV",
                 csv_data,
-                f"trufflehog_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                f"trufflehog_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                 "text/csv",
                 use_container_width=True,
             )
-
-        st.subheader("Detailed Records")
-        for i, r in enumerate(filtered_records):
-            verified_icon = "✅ Verified" if r.get("Verified") else "❌ Unverified"
-            with st.expander(
-                f"Record {i + 1}: {verified_icon} - {r.get('DetectorName', 'Unknown')} - {r.get('SourceName', '')}"
-            ):
-                st.json(r)
