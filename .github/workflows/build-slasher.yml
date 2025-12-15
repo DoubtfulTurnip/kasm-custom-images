@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Build and push workspace image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: Slasher-Kasm
           platforms: linux/amd64
