@@ -1,4 +1,4 @@
-FROM kasmweb/ubuntu-noble-dind:1.17.0
+FROM kasmweb/ubuntu-noble-dind:1.18.0
 
 USER root
 
@@ -16,7 +16,7 @@ RUN mkdir -p /bloodhound && \
 
 RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin
 
-    
+
 # Copy the custom startup script into the container.
 COPY custom_startup_bloodhound.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
@@ -33,4 +33,3 @@ WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
 USER 1000
-

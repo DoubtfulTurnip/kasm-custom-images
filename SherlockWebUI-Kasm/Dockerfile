@@ -1,4 +1,4 @@
-FROM kasmweb/ubuntu-noble-desktop:1.17.0
+FROM kasmweb/ubuntu-noble-desktop:1.18.0
 
 USER root
 
@@ -11,8 +11,8 @@ WORKDIR $HOME
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        python3-pip python3-venv curl git tor \
-        build-essential libjpeg-dev zlib1g-dev libpng-dev && \
+    python3-pip python3-venv curl git tor \
+    build-essential libjpeg-dev zlib1g-dev libpng-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment and install Python dependencies (including Sherlock v0.15.0)
