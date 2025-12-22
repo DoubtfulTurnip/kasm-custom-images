@@ -82,9 +82,9 @@ ENV PATH="/app/venv/bin:$PATH"
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt streamlit
 
-# ─── Install TruffleHog v3.92.3 as binary ──────────────────────────────────
+# ─── Install TruffleHog v3.92.4 as binary ──────────────────────────────────
 RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | \
-    sh -s -- -b /usr/local/bin v3.92.3
+    sh -s -- -b /usr/local/bin v3.92.4
 
 # ─── Ensure kasm-user can access /app ──────────────────────────────────────
 RUN chown -R 1000:0 /app
