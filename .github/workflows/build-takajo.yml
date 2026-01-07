@@ -39,7 +39,7 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.1
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.0
             ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -49,7 +49,7 @@ jobs:
           echo "# ✅ Takajo Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📦 Image Built and Pushed:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workspace Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.1\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workspace Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.0\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🚀 Features:" >> $GITHUB_STEP_SUMMARY
           echo "- Takajo timeline analysis for Windows event logs" >> $GITHUB_STEP_SUMMARY
@@ -57,4 +57,4 @@ jobs:
           echo "- Automated Windows event log processing" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📋 Usage:" >> $GITHUB_STEP_SUMMARY
-          echo "Update your Kasm workspace to use: \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.1\`" >> $GITHUB_STEP_SUMMARY
+          echo "Update your Kasm workspace to use: \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.0\`" >> $GITHUB_STEP_SUMMARY

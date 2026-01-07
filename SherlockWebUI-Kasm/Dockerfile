@@ -1,4 +1,4 @@
-FROM kasmweb/ubuntu-noble-desktop:1.18.1
+FROM kasmweb/ubuntu-noble-desktop:1.18.0-rolling-daily
 
 USER root
 
