@@ -14,3 +14,4 @@ requests-futures>=1.0.0
 soupsieve>=1.9.2
 stem>=1.7.1
 torrequest>=0.1.0
+urllib3>=2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability
