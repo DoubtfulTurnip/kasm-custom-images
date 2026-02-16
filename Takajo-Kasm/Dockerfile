@@ -93,7 +93,7 @@ RUN curl -L \
     chmod +x /usr/local/bin/takajo && \
     rm -rf /tmp/takajo.zip
 
-RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.13.1/chainsaw_all_platforms+rules.zip" \
+RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.14.1/chainsaw_all_platforms+rules.zip" \
     -o /tmp/chainsaw_all_platforms+rules.zip && \
     unzip /tmp/chainsaw_all_platforms+rules.zip -d /tmp && \
     rm /tmp/chainsaw_all_platforms+rules.zip && \

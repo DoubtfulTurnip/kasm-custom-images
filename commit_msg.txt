@@ -1,7 +1,8 @@
 chore: Auto-update application versions
 
 Updated versions:
-- Trufflehog: v3.92.5 to v3.93.1
+- Trufflehog: v3.93.1 to v3.93.3
+- Chainsaw: v2.13.1 to v2.14.1
 - Epagneul: 1.18.0 to null
 
 Automated update by check-versions workflow
