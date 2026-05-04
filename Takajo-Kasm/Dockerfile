@@ -67,7 +67,7 @@ RUN apt-get update && \
 
 # 2) Install Hayabusa v3.7.0
 RUN curl -L \
-    https://github.com/Yamato-Security/hayabusa/releases/download/v3.8.1/hayabusa-3.8.1-lin-x64-gnu.zip \
+    https://github.com/Yamato-Security/hayabusa/releases/download/v3.9.0/hayabusa-3.9.0-lin-x64-gnu.zip \
     -o /tmp/hayabusa.zip && \
     unzip /tmp/hayabusa.zip -d /tmp/hayabusa && \
     mv /tmp/hayabusa/*lin-x64-gnu /usr/local/bin/hayabusa && \
@@ -93,7 +93,7 @@ RUN curl -L \
     chmod +x /usr/local/bin/takajo && \
     rm -rf /tmp/takajo.zip
 
-RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.14.1/chainsaw_all_platforms+rules.zip" \
+RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.15.0/chainsaw_all_platforms+rules.zip" \
     -o /tmp/chainsaw_all_platforms+rules.zip && \
     unzip /tmp/chainsaw_all_platforms+rules.zip -d /tmp && \
     rm /tmp/chainsaw_all_platforms+rules.zip && \
