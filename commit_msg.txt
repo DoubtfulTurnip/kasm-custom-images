@@ -1,8 +1,8 @@
 chore: Auto-update application versions
 
 Updated versions:
-- Hayabusa: v3.8.1 to v3.9.0
-- Chainsaw: v2.14.1 to v2.15.0
+- Webcheck: 1.0.0 to 2.1.0
+- Chainsaw: v2.15.0 to v2.16.0
 - Epagneul: 1.18.0 to null
 
 Automated update by check-versions workflow

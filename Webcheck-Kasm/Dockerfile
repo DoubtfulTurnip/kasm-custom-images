@@ -28,7 +28,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone the Webcheck repository (pinned to v1.0.0), install dependencies, and build the application
-RUN git clone --branch 1.0.0 --depth 1 https://github.com/Lissy93/web-check.git /web-check && \
+RUN git clone --branch 2.1.0 --depth 1 https://github.com/Lissy93/web-check.git /web-check && \
     cd /web-check && \
     yarn install && \
     yarn build
