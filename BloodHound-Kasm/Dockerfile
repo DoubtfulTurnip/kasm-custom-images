@@ -14,7 +14,8 @@ WORKDIR $HOME
 RUN mkdir -p /bloodhound && \
     curl -L https://ghst.ly/getbhce -o /bloodhound/docker-compose.yml
 
-RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin
+RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin && \
+    rm -rf /var/lib/apt/lists/*
 
 
 # Copy the custom startup script into the container.

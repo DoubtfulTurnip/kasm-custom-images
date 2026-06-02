@@ -15,6 +15,10 @@ cd /opt/slasher
 cp template.env .env
 cp template.env backend/.env
 
+SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe(50))')
+sed -i "s|<your-secret-key>|$SECRET_KEY|" .env
+sed -i "s|<your-secret-key>|$SECRET_KEY|" backend/.env
+
 
 VT_KEY=$(zenity --entry \
   --title="Slasher: VirusTotal API Key" \
@@ -36,7 +40,7 @@ notify-send -t 800000 "Slasher" "Starting Slasher services…"
 docker compose up -d --build --force-recreate
 
 
-docker compose exec -T slasher_backend python3 manage.py migrate --noinput
+docker compose exec -T slasher_backend /opt/slasher/venv/bin/python manage.py migrate --noinput
 
 
 docker compose restart slasher_backend

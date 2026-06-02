@@ -43,7 +43,7 @@ jobs:
         id: webcheck
         run: |
           CURRENT_VERSION=$(grep -oP 'branch \K\d+\.\d+\.\d+' Webcheck-Kasm/Dockerfile | head -1)
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/Lissy93/web-check/releases/latest | jq -r .tag_name)
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/Lissy93/web-check/releases/latest | jq -r .tag_name | sed 's/^v//')
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
