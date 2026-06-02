@@ -32,12 +32,7 @@ RUN apt-get update && \
 RUN pip3 install --break-system-packages --no-cache-dir \
     -r /opt/slasher/backend/requirements.txt
 
-# 3) Generate a Django SECRET_KEY at build-time and inject into both env files
-RUN SECRET_KEY="$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')" && \
-    sed -i "s|<your-secret-key>|$SECRET_KEY|" /opt/slasher/template.env && \
-    sed -i "s|<your-secret-key>|$SECRET_KEY|" /opt/slasher/backend/.env
-
-# 4) Copy the custom startup script
+# 3) Copy the custom startup script
 COPY custom_startup_slasher.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 

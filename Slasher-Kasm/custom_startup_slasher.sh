@@ -15,6 +15,10 @@ cd /opt/slasher
 cp template.env .env
 cp template.env backend/.env
 
+SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe(50))')
+sed -i "s|<your-secret-key>|$SECRET_KEY|" .env
+sed -i "s|<your-secret-key>|$SECRET_KEY|" backend/.env
+
 
 VT_KEY=$(zenity --entry \
   --title="Slasher: VirusTotal API Key" \
