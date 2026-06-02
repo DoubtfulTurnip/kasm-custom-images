@@ -40,7 +40,7 @@ notify-send -t 800000 "Slasher" "Starting Slasher services…"
 docker compose up -d --build --force-recreate
 
 
-docker compose exec -T slasher_backend python3 manage.py migrate --noinput
+docker compose exec -T slasher_backend /opt/slasher/venv/bin/python manage.py migrate --noinput
 
 
 docker compose restart slasher_backend

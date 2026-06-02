@@ -22,14 +22,15 @@ RUN apt-get update && \
     zenity \
     docker-compose && \
     rm -rf /var/lib/apt/lists/* && \
-    git clone https://github.com/hexastrike/slasher.git /opt/slasher && \
+    git clone --depth 1 https://github.com/hexastrike/slasher.git /opt/slasher && \
     cd /opt/slasher && \
     git checkout 47ce2295153c7abe3f6b09bcb31885c617ec60f2 && \
     cd / && \
     cp /opt/slasher/template.env /opt/slasher/backend/.env
 
-# 2) Install Python dependencies
-RUN pip3 install --break-system-packages --no-cache-dir \
+# 2) Install Python dependencies in a venv
+RUN python3 -m venv /opt/slasher/venv && \
+    /opt/slasher/venv/bin/pip install --no-cache-dir \
     -r /opt/slasher/backend/requirements.txt
 
 # 3) Copy the custom startup script
