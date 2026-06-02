@@ -19,8 +19,8 @@ RUN apt-get update && \
     gnupg \
     wget && \
     \
-    # Install Node.js v21 from Nodesource
-    curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && \
+    # Install Node.js v22 from Nodesource (web-check requires >=22)
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
     \
     # Install Yarn globally via npm
@@ -30,7 +30,7 @@ RUN apt-get update && \
 # Clone the Webcheck repository (pinned to v1.0.0), install dependencies, and build the application
 RUN git clone --branch 2.1.0 --depth 1 https://github.com/Lissy93/web-check.git /web-check && \
     cd /web-check && \
-    yarn install && \
+    yarn install --frozen-lockfile && \
     yarn build
 
 # Set up the custom startup script that starts Webcheck and then launches Firefox in kiosk mode.
