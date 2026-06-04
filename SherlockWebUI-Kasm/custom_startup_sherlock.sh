@@ -1,16 +1,17 @@
 #!/bin/bash
 # Custom startup script for Streamlit-based Sherlock WebUI in Kasm
 
-# Wait for the Kasm desktop environment
 /usr/bin/desktop_ready
+
+# Start Tor so the Tor-mode proxy is available when requested.
+# Tor takes 10-30s to establish circuits; starting it early avoids delays.
+sudo service tor start &
 
 echo "[*] Launching Streamlit Sherlock UI..."
 cd /app
 source /app/venv/bin/activate
-# Start via Streamlit CLI so proper server context is created
 streamlit run app.py --server.address 0.0.0.0 --server.port 5000 --server.headless true &
 
-# Wait for Streamlit to become responsive
 echo "[*] Waiting for Streamlit to become responsive..."
 for i in {1..20}; do
     if curl -s http://localhost:5000 > /dev/null; then
