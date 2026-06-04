@@ -67,8 +67,7 @@ RUN apt-get update && \
     curl \
     git \
     libnotify-bin \
-    gobuster \
-    seclists && \
+    gobuster && \
     rm -rf /var/lib/apt/lists/*
 
 # ─── Copy and prepare the app ───────────────────────────────────────────────
