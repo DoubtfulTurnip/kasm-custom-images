@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write  # Required to dispatch downstream build workflows
 
 jobs:
   check-versions:
@@ -27,9 +28,21 @@ jobs:
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Trufflehog update available: $CURRENT_VERSION → $LATEST_VERSION"
-            # Auto-update Dockerfile
             sed -i "s|sh -s -- -b /usr/local/bin $CURRENT_VERSION|sh -s -- -b /usr/local/bin $LATEST_VERSION|g" Trufflehog-Kasm/Dockerfile
             sed -i "s|# ─── Install TruffleHog $CURRENT_VERSION|# ─── Install TruffleHog $LATEST_VERSION|g" Trufflehog-Kasm/Dockerfile
+          fi
+
+      - name: Check Sherlock version
+        id: sherlock
+        run: |
+          CURRENT_VERSION=$(grep -oP 'sherlock-project==\K[\d.]+' SherlockWebUI-Kasm/requirements.txt | head -1)
+          LATEST_VERSION=$(curl -s https://pypi.org/pypi/sherlock-project/json | jq -r .info.version)
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Sherlock update available: $CURRENT_VERSION → $LATEST_VERSION"
+            sed -i "s|sherlock-project==$CURRENT_VERSION|sherlock-project==$LATEST_VERSION|g" SherlockWebUI-Kasm/requirements.txt
           fi
 
       - name: Check SocialAnalyzer version
@@ -49,7 +62,6 @@ jobs:
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Webcheck update available: $CURRENT_VERSION → $LATEST_VERSION"
-            # Auto-update Dockerfile
             sed -i "s|--branch $CURRENT_VERSION|--branch $LATEST_VERSION|g" Webcheck-Kasm/Dockerfile
           fi
 
@@ -63,8 +75,23 @@ jobs:
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Hayabusa update available: v$CURRENT_VERSION → v$LATEST_VERSION"
-            # Auto-update Dockerfile
             sed -i "s|hayabusa/releases/download/v$CURRENT_VERSION/hayabusa-$CURRENT_VERSION|hayabusa/releases/download/v$LATEST_VERSION/hayabusa-$LATEST_VERSION|g" Takajo-Kasm/Dockerfile
+          fi
+
+      - name: Check Takajo version
+        id: takajo
+        run: |
+          CURRENT_VERSION=$(grep -oP 'takajo/releases/download/v\K\d+\.\d+\.\d+' Takajo-Kasm/Dockerfile | head -1)
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/Yamato-Security/takajo/releases/latest | jq -r .tag_name | sed 's/^v//')
+          echo "current=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=v$LATEST_VERSION" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::Takajo update available: v$CURRENT_VERSION → v$LATEST_VERSION"
+            # Update download URL and binary references
+            sed -i "s|takajo/releases/download/v$CURRENT_VERSION/takajo-$CURRENT_VERSION|takajo/releases/download/v$LATEST_VERSION/takajo-$LATEST_VERSION|g" Takajo-Kasm/Dockerfile
+            sed -i "s|takajo-$CURRENT_VERSION-lin-x64-gnu|takajo-$LATEST_VERSION-lin-x64-gnu|g" Takajo-Kasm/Dockerfile
+            sed -i "s|Install Takajō v$CURRENT_VERSION|Install Takajō v$LATEST_VERSION|g" Takajo-Kasm/Dockerfile
           fi
 
       - name: Check Chainsaw version (Takajo component)
@@ -77,7 +104,6 @@ jobs:
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Chainsaw update available: v$CURRENT_VERSION → v$LATEST_VERSION"
-            # Auto-update Dockerfile
             sed -i "s|chainsaw/releases/download/v$CURRENT_VERSION/|chainsaw/releases/download/v$LATEST_VERSION/|g" Takajo-Kasm/Dockerfile
           fi
 
@@ -91,7 +117,6 @@ jobs:
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Epagneul update available: $CURRENT_VERSION → $LATEST_VERSION"
-            # Auto-update Dockerfile
             sed -i "s|--branch $CURRENT_VERSION|--branch $LATEST_VERSION|g" Epagneul-Kasm/Dockerfile
           fi
 
@@ -109,7 +134,6 @@ jobs:
           if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Slasher update available: $CURRENT_SHORT → $LATEST_SHORT"
-            # Auto-update Dockerfile
             sed -i "s|git checkout $CURRENT_COMMIT|git checkout $LATEST_COMMIT|g" Slasher-Kasm/Dockerfile
           fi
 
@@ -130,33 +154,33 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Build commit message
-          echo "chore: Auto-update application versions" > commit_msg.txt
+          echo "chore: auto-update application versions" > commit_msg.txt
           echo "" >> commit_msg.txt
           echo "Updated versions:" >> commit_msg.txt
 
           if [ "${{ steps.trufflehog.outputs.update_available }}" == "true" ]; then
-            echo "- Trufflehog: ${{ steps.trufflehog.outputs.current }} to ${{ steps.trufflehog.outputs.latest }}" >> commit_msg.txt
+            echo "- Trufflehog: ${{ steps.trufflehog.outputs.current }} → ${{ steps.trufflehog.outputs.latest }}" >> commit_msg.txt
           fi
-
+          if [ "${{ steps.sherlock.outputs.update_available }}" == "true" ]; then
+            echo "- Sherlock: ${{ steps.sherlock.outputs.current }} → ${{ steps.sherlock.outputs.latest }}" >> commit_msg.txt
+          fi
           if [ "${{ steps.webcheck.outputs.update_available }}" == "true" ]; then
-            echo "- Webcheck: ${{ steps.webcheck.outputs.current }} to ${{ steps.webcheck.outputs.latest }}" >> commit_msg.txt
+            echo "- Webcheck: ${{ steps.webcheck.outputs.current }} → ${{ steps.webcheck.outputs.latest }}" >> commit_msg.txt
           fi
-
           if [ "${{ steps.hayabusa.outputs.update_available }}" == "true" ]; then
-            echo "- Hayabusa: ${{ steps.hayabusa.outputs.current }} to ${{ steps.hayabusa.outputs.latest }}" >> commit_msg.txt
+            echo "- Hayabusa: ${{ steps.hayabusa.outputs.current }} → ${{ steps.hayabusa.outputs.latest }}" >> commit_msg.txt
           fi
-
+          if [ "${{ steps.takajo.outputs.update_available }}" == "true" ]; then
+            echo "- Takajo: ${{ steps.takajo.outputs.current }} → ${{ steps.takajo.outputs.latest }}" >> commit_msg.txt
+          fi
           if [ "${{ steps.chainsaw.outputs.update_available }}" == "true" ]; then
-            echo "- Chainsaw: ${{ steps.chainsaw.outputs.current }} to ${{ steps.chainsaw.outputs.latest }}" >> commit_msg.txt
+            echo "- Chainsaw: ${{ steps.chainsaw.outputs.current }} → ${{ steps.chainsaw.outputs.latest }}" >> commit_msg.txt
           fi
-
           if [ "${{ steps.epagneul.outputs.update_available }}" == "true" ]; then
-            echo "- Epagneul: ${{ steps.epagneul.outputs.current }} to ${{ steps.epagneul.outputs.latest }}" >> commit_msg.txt
+            echo "- Epagneul: ${{ steps.epagneul.outputs.current }} → ${{ steps.epagneul.outputs.latest }}" >> commit_msg.txt
           fi
-
           if [ "${{ steps.slasher.outputs.update_available }}" == "true" ]; then
-            echo "- Slasher: ${{ steps.slasher.outputs.current }} to ${{ steps.slasher.outputs.latest }}" >> commit_msg.txt
+            echo "- Slasher: ${{ steps.slasher.outputs.current }} → ${{ steps.slasher.outputs.latest }}" >> commit_msg.txt
           fi
 
           echo "" >> commit_msg.txt
@@ -166,28 +190,63 @@ jobs:
           git commit -F commit_msg.txt
           git push
 
+      # Explicitly dispatch each affected build workflow.
+      # This is necessary because GitHub does not trigger workflow runs from
+      # pushes made by GITHUB_TOKEN (only PAT-authenticated pushes cascade).
+      - name: Trigger affected build workflows
+        if: steps.check_changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sleep 5
+          if [ "${{ steps.trufflehog.outputs.update_available }}" == "true" ]; then
+            gh workflow run build-trufflehog.yml --ref main
+            echo "Triggered: build-trufflehog.yml"
+          fi
+          if [ "${{ steps.sherlock.outputs.update_available }}" == "true" ]; then
+            gh workflow run build-sherlock.yml --ref main
+            echo "Triggered: build-sherlock.yml"
+          fi
+          if [ "${{ steps.webcheck.outputs.update_available }}" == "true" ]; then
+            gh workflow run build-webcheck.yml --ref main
+            echo "Triggered: build-webcheck.yml"
+          fi
+          if [ "${{ steps.hayabusa.outputs.update_available }}" == "true" ] || \
+             [ "${{ steps.takajo.outputs.update_available }}" == "true" ] || \
+             [ "${{ steps.chainsaw.outputs.update_available }}" == "true" ]; then
+            gh workflow run build-takajo.yml --ref main
+            echo "Triggered: build-takajo.yml"
+          fi
+          if [ "${{ steps.epagneul.outputs.update_available }}" == "true" ]; then
+            gh workflow run build-epagneul.yml --ref main
+            echo "Triggered: build-epagneul.yml"
+          fi
+          if [ "${{ steps.slasher.outputs.update_available }}" == "true" ]; then
+            gh workflow run build-slasher.yml --ref main
+            echo "Triggered: build-slasher.yml"
+          fi
+
       - name: Create summary
         run: |
           echo "# Version Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Application | Current | Latest | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|------------|---------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Trufflehog | ${{ steps.trufflehog.outputs.current }} | ${{ steps.trufflehog.outputs.latest }} | ${{ steps.trufflehog.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trufflehog | ${{ steps.trufflehog.outputs.current }} | ${{ steps.trufflehog.outputs.latest }} | ${{ steps.trufflehog.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Sherlock | ${{ steps.sherlock.outputs.current }} | ${{ steps.sherlock.outputs.latest }} | ${{ steps.sherlock.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SocialAnalyzer | ${{ steps.socialanalyzer.outputs.current }} | ${{ steps.socialanalyzer.outputs.latest }} | Uses Main Branch |" >> $GITHUB_STEP_SUMMARY
-          echo "| Webcheck | ${{ steps.webcheck.outputs.current }} | ${{ steps.webcheck.outputs.latest }} | ${{ steps.webcheck.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Hayabusa | ${{ steps.hayabusa.outputs.current }} | ${{ steps.hayabusa.outputs.latest }} | ${{ steps.hayabusa.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Chainsaw | ${{ steps.chainsaw.outputs.current }} | ${{ steps.chainsaw.outputs.latest }} | ${{ steps.chainsaw.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Epagneul | ${{ steps.epagneul.outputs.current }} | ${{ steps.epagneul.outputs.latest }} | ${{ steps.epagneul.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Slasher | ${{ steps.slasher.outputs.current }} | ${{ steps.slasher.outputs.latest }} | ${{ steps.slasher.outputs.update_available == 'true' && 'Auto-Updated' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Webcheck | ${{ steps.webcheck.outputs.current }} | ${{ steps.webcheck.outputs.latest }} | ${{ steps.webcheck.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Hayabusa | ${{ steps.hayabusa.outputs.current }} | ${{ steps.hayabusa.outputs.latest }} | ${{ steps.hayabusa.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Takajo | ${{ steps.takajo.outputs.current }} | ${{ steps.takajo.outputs.latest }} | ${{ steps.takajo.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Chainsaw | ${{ steps.chainsaw.outputs.current }} | ${{ steps.chainsaw.outputs.latest }} | ${{ steps.chainsaw.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Epagneul | ${{ steps.epagneul.outputs.current }} | ${{ steps.epagneul.outputs.latest }} | ${{ steps.epagneul.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Slasher | ${{ steps.slasher.outputs.current }} | ${{ steps.slasher.outputs.latest }} | ${{ steps.slasher.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
             echo "## Automatic Updates Applied" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Dockerfiles have been automatically updated and committed." >> $GITHUB_STEP_SUMMARY
-            echo "Build workflows will automatically trigger to rebuild and push updated containers to Docker Hub." >> $GITHUB_STEP_SUMMARY
+            echo "Dockerfiles updated, committed, and affected build workflows dispatched." >> $GITHUB_STEP_SUMMARY
           else
             echo "## All Applications Up to Date" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "No updates were needed. All applications are running the latest versions." >> $GITHUB_STEP_SUMMARY
+            echo "No updates needed." >> $GITHUB_STEP_SUMMARY
           fi

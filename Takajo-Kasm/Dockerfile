@@ -65,7 +65,7 @@ RUN apt-get update && \
     git libnotify-bin libpcre3 libpcre3-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# 2) Install Hayabusa v3.7.0
+# 2) Install Hayabusa v3.9.0
 RUN curl -L \
     https://github.com/Yamato-Security/hayabusa/releases/download/v3.9.0/hayabusa-3.9.0-lin-x64-gnu.zip \
     -o /tmp/hayabusa.zip && \
