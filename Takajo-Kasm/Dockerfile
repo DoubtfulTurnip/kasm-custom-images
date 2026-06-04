@@ -109,8 +109,12 @@ RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.16.
 
 
 
-# 5) Prepare reports directory
-RUN mkdir -p /reports
+# 5) Prepare reports directory and desktop usage instructions
+RUN mkdir -p /reports && \
+    mkdir -p /home/kasm-default-profile/Desktop && \
+    printf '=== Takajo EVTX Analysis Workspace ===\n\nHOW TO USE:\n1. Place Windows Event Log (.evtx) files into: Desktop/Uploads/\n2. Wait 30 seconds after the last file is dropped — analysis starts automatically\n3. Reports appear in: Desktop/Downloads/TakajoReports_[TIMESTAMP]/\n4. A ZIP archive is also created in Desktop/Downloads/\n5. The HTML dashboard opens automatically in Chrome\n\nTOOLS INSTALLED:\n- Hayabusa  (Windows event log timeline analysis)\n- Takajo    (timeline post-processing and HTML reporting)\n- Chainsaw  (threat hunting with Sigma rules)\n\nDETECTION RULES:\nHayabusa rules are updated automatically each time this workspace starts.\n' \
+    > /home/kasm-default-profile/Desktop/USAGE.txt && \
+    chown 1000:0 /home/kasm-default-profile/Desktop/USAGE.txt
 
 # 6) Copy custom startup script
 COPY custom_startup_takajo.sh $STARTUPDIR/custom_startup.sh
