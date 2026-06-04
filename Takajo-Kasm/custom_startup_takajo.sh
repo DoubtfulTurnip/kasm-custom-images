@@ -14,6 +14,11 @@ if ! command -v notify-send &>/dev/null; then
   function notify-send() { :; }
 fi
 
+# Update Hayabusa detection rules in the background so they stay current.
+# Runs silently; failures (e.g. no network) are non-fatal.
+echo "$LOG updating Hayabusa rules in background"
+git -C /opt/hayabusa-rules pull --ff-only --quiet 2>/dev/null &
+
 # ------------------------------------------------------------
 # CONFIG
 HOME_DIR="$HOME"
