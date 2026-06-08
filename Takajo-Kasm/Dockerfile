@@ -80,16 +80,16 @@ RUN git clone --depth=1 \
     /opt/hayabusa-rules && \
     ln -s /opt/hayabusa-rules "$HOME/rules"
 
-# 4) Install Takajō v2.10.0 into HOME and ensure permissions
+# 4) Install Takajō v2.16.1 into HOME and ensure permissions
 RUN curl -L \
-    https://github.com/Yamato-Security/takajo/releases/download/v2.10.0/takajo-2.10.0-lin-x64-gnu.zip \
+    https://github.com/Yamato-Security/takajo/releases/download/v2.16.1/takajo-2.16.1-lin-x64-gnu.zip \
     -o /tmp/takajo.zip && \
     unzip /tmp/takajo.zip -d "$HOME/takajo" && \
-    chmod +x "$HOME/takajo/takajo-2.10.0-lin-x64-gnu" && \
+    chmod +x "$HOME/takajo/takajo-2.16.1-lin-x64-gnu" && \
     chown -R 1000:0 "$HOME/takajo" && \
     chmod -R a+rX "$HOME/takajo" && \
     # Wrapper to always run from takajo dir
-    printf '#!/usr/bin/env bash\ncd "$HOME"/takajo && exec "$HOME"/takajo/takajo-2.10.0-lin-x64-gnu "$@"\n' > /usr/local/bin/takajo && \
+    printf '#!/usr/bin/env bash\ncd "$HOME"/takajo && exec "$HOME"/takajo/takajo-2.16.1-lin-x64-gnu "$@"\n' > /usr/local/bin/takajo && \
     chmod +x /usr/local/bin/takajo && \
     rm -rf /tmp/takajo.zip
 

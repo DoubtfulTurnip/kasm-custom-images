@@ -1,7 +1,8 @@
-chore: Auto-update application versions
+chore: auto-update application versions
 
 Updated versions:
-- Trufflehog: v3.95.2 to v3.95.3
-- Epagneul: 1.18.0 to null
+- Trufflehog: v3.95.3 → v3.95.5
+- Takajo: v2.10.0 → v2.16.1
+- Epagneul: 1.18.0 → null
 
 Automated update by check-versions workflow
