@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.f.outputs.dirs }}
+      any: ${{ steps.f.outputs.any }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: f
+        name: Detect changed image directories
+        run: |
+          base='${{ github.event.pull_request.base.sha }}'
+          head='${{ github.event.pull_request.head.sha }}'
+          changed=$(git diff --name-only "$base" "$head" | awk -F/ '/-Kasm\//{print $1}' | sort -u | sed '/^$/d')
+          dirs=$(printf '%s\n' $changed | sed '/^$/d' | jq -R . | jq -cs .)
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+          if [ -n "$changed" ]; then echo "any=true" >> "$GITHUB_OUTPUT"; else echo "any=false" >> "$GITHUB_OUTPUT"; fi
+          echo "Changed image dirs: ${changed:-none}"
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJSON(needs.detect.outputs.dirs) }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - name: Log in to Docker Hub
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: bukshee
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      - name: Build without push - ${{ matrix.dir }}
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.dir }}
+          platforms: linux/amd64
+          push: false
+          cache-from: type=gha
+
+  ci:
+    needs: [detect, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate result
+        run: |
+          echo "detect=${{ needs.detect.result }} build=${{ needs.build.result }}"
+          if [ "${{ needs.detect.result }}" = "failure" ] || [ "${{ needs.build.result }}" = "failure" ]; then
+            echo "A required build failed"; exit 1
+          fi
+          echo "CI gate passed"
