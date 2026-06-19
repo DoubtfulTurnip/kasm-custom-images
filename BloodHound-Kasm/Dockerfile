@@ -34,3 +34,5 @@ WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
 USER 1000
+
+# ci-gate dry-run marker (safe to remove)
