@@ -1,4 +1,4 @@
-FROM kasmweb/ubuntu-noble-dind:1.18.0-rolling-daily
+FROM kasmweb/ubuntu-noble-dind:1.19.0-rolling-daily
 
 USER root
 
