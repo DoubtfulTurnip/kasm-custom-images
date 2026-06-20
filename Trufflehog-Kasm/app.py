@@ -46,225 +46,230 @@ if "scan_history" not in st.session_state:
 if "current_results" not in st.session_state:
     st.session_state.current_results = None
 
-# Apply dark theme CSS overrides
-theme = "Dark"
-if theme == "Dark":
+# Apply a purpose-built TruffleHog console theme.
+st.markdown(
+    """
+    <style>
+    :root {
+        --th-bg: #0b1020;
+        --th-panel: #111827;
+        --th-panel-2: #172033;
+        --th-border: rgba(148, 163, 184, 0.22);
+        --th-text: #e5e7eb;
+        --th-muted: #94a3b8;
+        --th-accent: #f97316;
+        --th-accent-2: #22d3ee;
+        --th-success: #22c55e;
+        --th-warning: #f59e0b;
+        --th-danger: #ef4444;
+    }
+
+    [data-testid="stAppViewContainer"] {
+        background:
+            radial-gradient(circle at 12% 8%, rgba(249, 115, 22, 0.18), transparent 28rem),
+            radial-gradient(circle at 88% 0%, rgba(34, 211, 238, 0.14), transparent 24rem),
+            linear-gradient(180deg, #0b1020 0%, #0f172a 48%, #111827 100%) !important;
+        color: var(--th-text) !important;
+    }
+
+    [data-testid="stSidebar"] {
+        background: rgba(15, 23, 42, 0.96) !important;
+        border-right: 1px solid var(--th-border);
+    }
+
+    [data-testid="stSidebar"] *,
+    [data-testid="stAppViewContainer"] label,
+    [data-testid="stAppViewContainer"] p,
+    [data-testid="stAppViewContainer"] span,
+    [data-testid="stAppViewContainer"] h1,
+    [data-testid="stAppViewContainer"] h2,
+    [data-testid="stAppViewContainer"] h3 {
+        color: var(--th-text) !important;
+    }
+
+    .block-container {
+        padding-top: 1.5rem;
+        max-width: 1380px;
+    }
+
+    .hero-card,
+    .metric-card,
+    .guide-card {
+        background: linear-gradient(135deg, rgba(17, 24, 39, 0.94), rgba(30, 41, 59, 0.82));
+        border: 1px solid var(--th-border);
+        border-radius: 22px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+    }
+
+    .hero-card {
+        padding: 1.6rem 1.8rem;
+        margin-bottom: 1.4rem;
+    }
+
+    .hero-eyebrow {
+        color: var(--th-accent-2) !important;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .hero-title {
+        color: #ffffff !important;
+        font-size: 2.55rem;
+        font-weight: 850;
+        line-height: 1.04;
+        margin: 0.3rem 0 0.45rem;
+    }
+
+    .hero-subtitle {
+        color: var(--th-muted) !important;
+        font-size: 1.02rem;
+        line-height: 1.6;
+        max-width: 820px;
+    }
+
+    .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin-top: 1rem;
+    }
+
+    .th-badge {
+        background: rgba(249, 115, 22, 0.12);
+        border: 1px solid rgba(249, 115, 22, 0.34);
+        border-radius: 999px;
+        color: #fed7aa !important;
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 0.35rem 0.7rem;
+    }
+
+    .metric-card {
+        padding: 1rem 1.1rem;
+        min-height: 7rem;
+    }
+
+    .metric-label {
+        color: var(--th-muted) !important;
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .metric-value {
+        color: #ffffff !important;
+        font-size: 2rem;
+        font-weight: 850;
+        margin-top: 0.3rem;
+    }
+
+    .metric-help {
+        color: var(--th-muted) !important;
+        font-size: 0.85rem;
+        margin-top: 0.2rem;
+    }
+
+    .guide-card {
+        padding: 1rem 1.1rem;
+        margin: 0.75rem 0 1.2rem;
+    }
+
+    .guide-card strong {
+        color: #ffffff !important;
+    }
+
+    div.stButton > button,
+    div.stDownloadButton > button {
+        border-radius: 12px !important;
+        border: 1px solid rgba(249, 115, 22, 0.45) !important;
+        background: linear-gradient(135deg, #f97316, #ea580c) !important;
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        min-height: 2.75rem;
+    }
+
+    div.stButton > button:hover,
+    div.stDownloadButton > button:hover {
+        border-color: rgba(251, 146, 60, 0.9) !important;
+        filter: brightness(1.06);
+    }
+
+    input, textarea, div[data-baseweb="select"] > div {
+        background: rgba(15, 23, 42, 0.96) !important;
+        border-color: var(--th-border) !important;
+        color: var(--th-text) !important;
+        border-radius: 12px !important;
+    }
+
+    div[data-testid="stExpander"],
+    [data-testid="stDataFrame"] {
+        background: rgba(17, 24, 39, 0.82) !important;
+        border: 1px solid var(--th-border) !important;
+        border-radius: 16px !important;
+    }
+
+    code, pre {
+        white-space: pre-wrap !important;
+        overflow-wrap: anywhere !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+def render_hero():
     st.markdown(
         """
-        <style>
-        /* Main app and sidebar backgrounds - softer dark theme */
-        [data-testid="stAppViewContainer"] {
-            background-color: #1E1E1E !important;
-            color: #E8E8E8 !important;
-        }
-        [data-testid="stSidebar"] {
-            background-color: #2A2A2A !important;
-        }
-
-        /* All text elements - force white/light text */
-        .stMarkdown, .stText, p, span, div, h1, h2, h3, h4, h5, h6, label,
-        .stSelectbox label, .stNumberInput label, .stSlider label,
-        .stCheckbox label, .stRadio label, .stTextInput label,
-        [data-testid="stSidebar"] label, [data-testid="stSidebar"] p,
-        [data-testid="stSidebar"] span, [data-testid="stSidebar"] div,
-        [data-testid="stSidebar"] .stMarkdown,
-        [data-testid="stSidebar"] * {
-            color: #FAFAFA !important;
-        }
-
-        /* Force all sidebar elements including icons */
-        [data-testid="stSidebar"] svg {
-            color: #FAFAFA !important;
-            fill: #FAFAFA !important;
-        }
-
-        /* Override Streamlit's default text colors in sidebar */
-        [data-testid="stSidebar"] .css-1v0mbdj,
-        [data-testid="stSidebar"] .css-10trblm,
-        section[data-testid="stSidebar"] small,
-        section[data-testid="stSidebar"] .stText {
-            color: #FAFAFA !important;
-        }
-
-        /* Buttons */
-        div.stButton > button {
-            background-color: #4A4A4A !important;
-            color: #FFFFFF !important;
-            border: 1px solid #666666 !important;
-        }
-        div.stButton > button:hover {
-            background-color: #5A5A5A !important;
-            border-color: #888888 !important;
-        }
-
-        /* Download buttons */
-        div.stDownloadButton > button {
-            background-color: #FF6B35 !important;
-            color: #FFFFFF !important;
-            border: 1px solid #FF8555 !important;
-        }
-        div.stDownloadButton > button:hover {
-            background-color: #FF7B45 !important;
-        }
-
-        /* Input fields */
-        input, textarea {
-            background-color: #353535 !important;
-            color: #E8E8E8 !important;
-            border: 1px solid #555555 !important;
-        }
-        input:focus, textarea:focus {
-            border-color: #888888 !important;
-            box-shadow: 0 0 0 1px #888888 !important;
-        }
-
-        /* Select dropdowns */
-        select, div[data-baseweb="select"] {
-            background-color: #353535 !important;
-            color: #E8E8E8 !important;
-        }
-
-        /* Force dropdown selected value text to be visible */
-        div[data-baseweb="select"] span,
-        div[data-baseweb="select"] div,
-        [data-baseweb="select"] * {
-            color: #E8E8E8 !important;
-        }
-
-        /* Dropdown menu container */
-        div[data-baseweb="popover"] {
-            background-color: #353535 !important;
-        }
-
-        /* Dropdown options */
-        div[role="option"] {
-            background-color: #353535 !important;
-            color: #E8E8E8 !important;
-        }
-        div[role="option"]:hover {
-            background-color: #FF6B35 !important;
-            color: #FFFFFF !important;
-        }
-
-        /* Fix Streamlit's default white text on option elements */
-        li[role="option"] span {
-            color: #FAFAFA !important;
-        }
-        li[role="option"]:hover span {
-            color: #FFFFFF !important;
-        }
-
-        /* Dropdown list container */
-        ul[role="listbox"] {
-            background-color: #353535 !important;
-        }
-
-        /* Selected option text */
-        div[data-baseweb="select"] > div {
-            color: #E8E8E8 !important;
-        }
-
-        /* Multiselect tags */
-        div[data-baseweb="tag"] {
-            background-color: #FF6B35 !important;
-            color: #FFFFFF !important;
-        }
-
-        /* Placeholders */
-        ::placeholder {
-            color: #999999 !important;
-        }
-
-        /* Dataframes and tables */
-        .stDataFrame, table {
-            background-color: #2A2A2A !important;
-            color: #E8E8E8 !important;
-        }
-        thead tr th {
-            background-color: #353535 !important;
-            color: #FFFFFF !important;
-        }
-        tbody tr {
-            background-color: #2A2A2A !important;
-            color: #E8E8E8 !important;
-        }
-        tbody tr:hover {
-            background-color: #353535 !important;
-        }
-
-        /* Expanders */
-        .streamlit-expanderHeader {
-            background-color: #353535 !important;
-            color: #E8E8E8 !important;
-        }
-        .streamlit-expanderContent {
-            background-color: #2A2A2A !important;
-            color: #E8E8E8 !important;
-        }
-
-        /* Sliders */
-        div[data-baseweb="slider"] {
-            color: #FAFAFA !important;
-        }
-        div[data-baseweb="slider"] div {
-            color: #FAFAFA !important;
-        }
-
-        /* Progress bars */
-        .stProgress > div > div {
-            background-color: #FF6B35 !important;
-        }
-
-        /* Number input increment/decrement buttons */
-        button[kind="stepUp"], button[kind="stepDown"] {
-            color: #FAFAFA !important;
-        }
-
-        /* Help tooltips */
-        .stTooltipIcon {
-            color: #AAAAAA !important;
-        }
-
-        /* Section headers in sidebar */
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2,
-        [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4 {
-            color: #FFFFFF !important;
-        }
-
-        /* Success/Error/Warning/Info boxes text should stay readable */
-        .stSuccess {
-            background-color: #1E7B34 !important;
-            color: #FFFFFF !important;
-        }
-        .stError {
-            background-color: #C92A2A !important;
-            color: #FFFFFF !important;
-        }
-        .stWarning {
-            background-color: #F76707 !important;
-            color: #FFFFFF !important;
-        }
-        .stInfo {
-            background-color: #1971C2 !important;
-            color: #FFFFFF !important;
-        }
-        </style>
+        <div class="hero-card">
+          <div class="hero-eyebrow">Secrets discovery workstation</div>
+          <div class="hero-title">TruffleHog WebUI</div>
+          <div class="hero-subtitle">
+            Launch guided scans, review verified and unknown findings, and export evidence
+            from a focused Kasm desktop interface. Results are saved locally in Downloads
+            as JSONL and can be re-opened from scan history.
+          </div>
+          <div class="badge-row">
+            <span class="th-badge">Verified + unknown findings</span>
+            <span class="th-badge">Repository, cloud, web, and filesystem scans</span>
+            <span class="th-badge">Local exports</span>
+          </div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
-# Display title with Trufflehog icon
-col1, col2 = st.columns([0.08, 0.92])
-with col1:
-    st.image("trufflehog-icon.png", width=60)
-with col2:
+
+def render_metric_card(label, value, help_text):
     st.markdown(
-        "<h1 style='margin-top: 10px;'>Trufflehog WebUI</h1>", unsafe_allow_html=True
+        f"""
+        <div class="metric-card">
+          <div class="metric-label">{label}</div>
+          <div class="metric-value">{value}</div>
+          <div class="metric-help">{help_text}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
+
+
+render_hero()
+
+st.sidebar.image("trufflehog-icon.png", width=72)
+st.sidebar.markdown("## TruffleHog")
+st.sidebar.caption(
+    "Choose a scan profile, tune execution, then export the findings you need."
+)
 
 # Sidebar: Advanced Settings
 st.sidebar.markdown("---")
-st.sidebar.markdown("### ⚙️ Advanced Settings")
+st.sidebar.markdown("### ⚙️ Scan controls")
+st.sidebar.info(
+    "Run scans only against assets you own or are explicitly authorized to test."
+)
 
 # Concurrency control
 concurrency = st.sidebar.slider(
@@ -343,9 +348,21 @@ if st.session_state.scan_history:
             st.rerun()
     if st.sidebar.button("Clear History"):
         st.session_state.scan_history = []
+        save_history_to_file([])
+        st.session_state.current_results = None
         st.rerun()
 else:
-    st.sidebar.text("No scan history yet")
+    st.sidebar.caption("Completed scans will appear here for quick review.")
+
+st.markdown(
+    """
+    <div class="guide-card">
+      <strong>Recommended workflow:</strong> pick the narrowest scan mode, start with verified + unknown results,
+      export the raw JSONL evidence from Downloads, and rotate any exposed credentials before sharing findings.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # Helper function to add common flags to command
@@ -462,6 +479,14 @@ def crawl_and_scan(start_url, max_pages, scope, out_file_path):
     progress_bar.progress(100)
     status_text.text(f"Crawl complete! Scanned {len(seen)} pages.")
     return all_results
+
+
+def mask_secret(value):
+    if not value:
+        return ""
+    if len(value) <= 8:
+        return "•" * len(value)
+    return f"{value[:4]}{'•' * min(24, len(value) - 8)}{value[-4:]}"
 
 
 # Function to save scan to history
@@ -869,6 +894,33 @@ if records is not None:
     if not records:
         st.success("✅ No secrets found.")
     else:
+        verified_count = sum(1 for r in records if r.get("Verified", False))
+        unknown_count = len(records) - verified_count
+        detector_count = len(set(r.get("DetectorName", "Unknown") for r in records))
+
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+        with metric_col1:
+            render_metric_card(
+                "Total findings", len(records), "All findings returned by TruffleHog"
+            )
+        with metric_col2:
+            render_metric_card(
+                "Verified secrets", verified_count, "Confirmed active credentials"
+            )
+        with metric_col3:
+            render_metric_card(
+                "Detector types", detector_count, "Unique detectors represented"
+            )
+
+        if verified_count:
+            st.error(
+                f"{verified_count} verified secret(s) require immediate triage and credential rotation."
+            )
+        elif unknown_count:
+            st.warning(
+                f"{unknown_count} unknown finding(s) need validation before closing the scan."
+            )
+
         # Result filtering
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
@@ -892,6 +944,11 @@ if records is not None:
             )
 
         with col3:
+            reveal_secrets = st.checkbox(
+                "Reveal secret values",
+                value=False,
+                help="Keep disabled for screenshots or demos. Exports still contain raw values.",
+            )
             st.markdown("**Export Results:**")
             export_col1, export_col2 = st.columns(2)
 
@@ -988,12 +1045,27 @@ if records is not None:
                         st.write(f"**Source Type:** {r.get('SourceType')}")
 
                 with col2:
+                    raw_value = r.get("Raw", "")
+                    raw_v2_value = r.get("RawV2", "")
                     st.markdown("**Secret Value:**")
-                    st.code(r.get("Raw", ""), language="text")
+                    if reveal_secrets:
+                        st.code(raw_value, language="text")
+                    else:
+                        st.code(mask_secret(raw_value), language="text")
+                        st.caption(
+                            "Enable 'Reveal secret values' above to view the full value."
+                        )
 
-                    if r.get("RawV2"):
+                    if raw_v2_value:
                         st.markdown("**Additional Data:**")
-                        st.code(r.get("RawV2", ""), language="text")
+                        st.code(
+                            (
+                                raw_v2_value
+                                if reveal_secrets
+                                else mask_secret(raw_v2_value)
+                            ),
+                            language="text",
+                        )
 
                 st.markdown("---")
                 st.markdown("**Full JSON Data:**")
