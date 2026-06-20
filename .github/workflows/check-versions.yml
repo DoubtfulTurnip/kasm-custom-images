@@ -2,7 +2,7 @@ name: Check Upstream Versions
 
 on:
   schedule:
-    - cron: "0 0 * * 1" # Weekly on Monday at midnight UTC
+    - cron: "0 0 * * *" # Daily at midnight UTC
   workflow_dispatch: # Allow manual triggering
 
 permissions:
@@ -159,6 +159,7 @@ jobs:
           fi
 
       - name: Commit and push changes
+        id: commit_changes
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           git config user.name "github-actions[bot]"
@@ -201,6 +202,8 @@ jobs:
 
           git add -A
           git commit -F commit_msg.txt
+          COMMITTED_SHA=$(git rev-parse HEAD)
+          echo "committed_sha=$COMMITTED_SHA" >> "$GITHUB_OUTPUT"
           git push
 
       # Explicitly dispatch each affected build workflow.
@@ -211,35 +214,42 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          sleep 5
+          UPDATED_REF="${{ steps.commit_changes.outputs.committed_sha }}"
+          if [ -z "$UPDATED_REF" ]; then
+            echo "No committed SHA was recorded; refusing to dispatch builds against a stale ref." >&2
+            exit 1
+          fi
+
+          echo "Dispatching build workflows at updated ref: $UPDATED_REF"
+
           if [ "${{ steps.trufflehog.outputs.update_available }}" == "true" ]; then
-            gh workflow run build-trufflehog.yml --ref main
+            gh workflow run build-trufflehog.yml --ref "$UPDATED_REF"
             echo "Triggered: build-trufflehog.yml"
           fi
           if [ "${{ steps.sherlock.outputs.update_available }}" == "true" ]; then
-            gh workflow run build-sherlock.yml --ref main
+            gh workflow run build-sherlock.yml --ref "$UPDATED_REF"
             echo "Triggered: build-sherlock.yml"
           fi
           if [ "${{ steps.socialanalyzer.outputs.update_available }}" == "true" ]; then
-            gh workflow run build-socialanalyzer.yml --ref main
+            gh workflow run build-socialanalyzer.yml --ref "$UPDATED_REF"
             echo "Triggered: build-socialanalyzer.yml"
           fi
           if [ "${{ steps.webcheck.outputs.update_available }}" == "true" ]; then
-            gh workflow run build-webcheck.yml --ref main
+            gh workflow run build-webcheck.yml --ref "$UPDATED_REF"
             echo "Triggered: build-webcheck.yml"
           fi
           if [ "${{ steps.hayabusa.outputs.update_available }}" == "true" ] || \
              [ "${{ steps.takajo.outputs.update_available }}" == "true" ] || \
              [ "${{ steps.chainsaw.outputs.update_available }}" == "true" ]; then
-            gh workflow run build-takajo.yml --ref main
+            gh workflow run build-takajo.yml --ref "$UPDATED_REF"
             echo "Triggered: build-takajo.yml"
           fi
           if [ "${{ steps.epagneul.outputs.update_available }}" == "true" ]; then
-            gh workflow run build-epagneul.yml --ref main
+            gh workflow run build-epagneul.yml --ref "$UPDATED_REF"
             echo "Triggered: build-epagneul.yml"
           fi
           if [ "${{ steps.slasher.outputs.update_available }}" == "true" ]; then
-            gh workflow run build-slasher.yml --ref main
+            gh workflow run build-slasher.yml --ref "$UPDATED_REF"
             echo "Triggered: build-slasher.yml"
           fi
 
