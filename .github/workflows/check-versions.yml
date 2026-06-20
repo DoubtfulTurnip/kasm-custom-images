@@ -48,9 +48,19 @@ jobs:
       - name: Check SocialAnalyzer version
         id: socialanalyzer
         run: |
-          # SocialAnalyzer uses main branch (no releases), skip auto-update
-          echo "current=main" >> $GITHUB_OUTPUT
-          echo "latest=main" >> $GITHUB_OUTPUT
+          CURRENT_COMMIT=$(grep -oP 'ARG SOCIAL_ANALYZER_COMMIT=\K[a-f0-9]{40}' SocialAnalyzer-Kasm/Dockerfile | head -1)
+          LATEST_COMMIT=$(curl -s https://api.github.com/repos/qeeqbox/social-analyzer/commits/main | jq -r .sha)
+          CURRENT_SHORT="${CURRENT_COMMIT:0:7}"
+          LATEST_SHORT="${LATEST_COMMIT:0:7}"
+          echo "current=$CURRENT_SHORT" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_SHORT" >> $GITHUB_OUTPUT
+          echo "current_full=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
+          echo "latest_full=$LATEST_COMMIT" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::SocialAnalyzer update available: $CURRENT_SHORT → $LATEST_SHORT"
+            sed -i "s|ARG SOCIAL_ANALYZER_COMMIT=$CURRENT_COMMIT|ARG SOCIAL_ANALYZER_COMMIT=$LATEST_COMMIT|g" SocialAnalyzer-Kasm/Dockerfile
+          fi
 
       - name: Check Webcheck version
         id: webcheck
@@ -164,6 +174,9 @@ jobs:
           if [ "${{ steps.sherlock.outputs.update_available }}" == "true" ]; then
             echo "- Sherlock: ${{ steps.sherlock.outputs.current }} → ${{ steps.sherlock.outputs.latest }}" >> commit_msg.txt
           fi
+          if [ "${{ steps.socialanalyzer.outputs.update_available }}" == "true" ]; then
+            echo "- SocialAnalyzer: ${{ steps.socialanalyzer.outputs.current }} → ${{ steps.socialanalyzer.outputs.latest }}" >> commit_msg.txt
+          fi
           if [ "${{ steps.webcheck.outputs.update_available }}" == "true" ]; then
             echo "- Webcheck: ${{ steps.webcheck.outputs.current }} → ${{ steps.webcheck.outputs.latest }}" >> commit_msg.txt
           fi
@@ -207,6 +220,10 @@ jobs:
             gh workflow run build-sherlock.yml --ref main
             echo "Triggered: build-sherlock.yml"
           fi
+          if [ "${{ steps.socialanalyzer.outputs.update_available }}" == "true" ]; then
+            gh workflow run build-socialanalyzer.yml --ref main
+            echo "Triggered: build-socialanalyzer.yml"
+          fi
           if [ "${{ steps.webcheck.outputs.update_available }}" == "true" ]; then
             gh workflow run build-webcheck.yml --ref main
             echo "Triggered: build-webcheck.yml"
@@ -234,7 +251,7 @@ jobs:
           echo "|------------|---------|--------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Trufflehog | ${{ steps.trufflehog.outputs.current }} | ${{ steps.trufflehog.outputs.latest }} | ${{ steps.trufflehog.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Sherlock | ${{ steps.sherlock.outputs.current }} | ${{ steps.sherlock.outputs.latest }} | ${{ steps.sherlock.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| SocialAnalyzer | ${{ steps.socialanalyzer.outputs.current }} | ${{ steps.socialanalyzer.outputs.latest }} | Uses Main Branch |" >> $GITHUB_STEP_SUMMARY
+          echo "| SocialAnalyzer | ${{ steps.socialanalyzer.outputs.current }} | ${{ steps.socialanalyzer.outputs.latest }} | ${{ steps.socialanalyzer.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Webcheck | ${{ steps.webcheck.outputs.current }} | ${{ steps.webcheck.outputs.latest }} | ${{ steps.webcheck.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Hayabusa | ${{ steps.hayabusa.outputs.current }} | ${{ steps.hayabusa.outputs.latest }} | ${{ steps.hayabusa.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Takajo | ${{ steps.takajo.outputs.current }} | ${{ steps.takajo.outputs.latest }} | ${{ steps.takajo.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
