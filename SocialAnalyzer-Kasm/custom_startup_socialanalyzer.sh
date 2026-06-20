@@ -9,6 +9,8 @@ LOG_DIR="$HOME/Desktop/Downloads"
 LOG_FILE="$LOG_DIR/socialanalyzer-startup.log"
 DOCKER_INFO_LOG="/tmp/socialanalyzer-docker-info.log"
 DOCKER_CMD=(docker)
+APP_READY_ATTEMPTS=300
+APP_READY_SLEEP_SECONDS=2
 
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -58,10 +60,14 @@ check_docker_ready() {
   return 1
 }
 
+check_app_ready() {
+  curl -fsS --connect-timeout 2 --max-time 5 "$APP_URL" >/dev/null 2>&1
+}
+
 # 1) Signal Kasm that desktop is ready
 /usr/bin/desktop_ready || true
 
-# 2) Ensure Docker daemon is running (DinD base auto-launches dockerd)
+# 2) Ensure Docker daemon is running
 log "Starting Docker service..."
 sudo service docker start || fail "Docker service failed to start. See $LOG_FILE"
 
@@ -81,7 +87,7 @@ if ! check_docker_ready; then
   fail "Docker did not become ready. See $LOG_FILE"
 fi
 
-# 3) Change to the cloned repo (contains docker-compose.yml)
+# 3) Change to the Compose directory
 cd "$APP_DIR" || fail "Could not change to $APP_DIR"
 
 if [ -f /opt/social-analyzer.UPSTREAM_COMMIT ]; then
@@ -90,24 +96,27 @@ fi
 
 notify "Starting SocialAnalyzer services..."
 
-# 4) Bring up Selenium hub/node + Social-Analyzer web container
+# 4) Pull and start the prebuilt SocialAnalyzer web container.
+log "Pulling prebuilt SocialAnalyzer app image..."
+"${DOCKER_CMD[@]}" compose pull --quiet || fail "Docker Compose failed to pull the prebuilt SocialAnalyzer app image. See $LOG_FILE"
+
 log "Starting Docker Compose services..."
 "${DOCKER_CMD[@]}" compose up -d --remove-orphans || fail "Docker Compose failed to start SocialAnalyzer services. See $LOG_FILE"
 
-# 5) Wait for the web UI to become responsive instead of using a fixed sleep
+# 5) Wait for the web UI to become responsive before launching a browser.
 log "Waiting for SocialAnalyzer to become responsive at $APP_URL..."
 ready=false
-for i in {1..60}; do
-  if curl -sf "$APP_URL" >/dev/null 2>&1; then
+for ((i = 1; i <= APP_READY_ATTEMPTS; i++)); do
+  if check_app_ready; then
     ready=true
     log "SocialAnalyzer is ready"
     break
   fi
-  log "Still waiting for SocialAnalyzer... ($i/60)"
-  sleep 2
+  log "Still waiting for SocialAnalyzer... ($i/$APP_READY_ATTEMPTS)"
+  sleep "$APP_READY_SLEEP_SECONDS"
 done
 
-[ "$ready" = "true" ] || fail "SocialAnalyzer did not become ready within 120 seconds. See $LOG_FILE"
+[ "$ready" = "true" ] || fail "SocialAnalyzer did not become ready. See $LOG_FILE"
 
 # 6) Prepare Chrome preferences to avoid first-run dialogs
 CHROME_PREF_DIR="$HOME/.config/google-chrome/Default"

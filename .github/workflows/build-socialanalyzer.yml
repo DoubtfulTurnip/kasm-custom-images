@@ -10,10 +10,16 @@ on:
     - cron: "0 2 * * 0" # Weekly Sunday 2 AM UTC
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 env:
-  REGISTRY: docker.io
-  DOCKER_HUB_USERNAME: bukshee
-  IMAGE_NAME: socialanalyzer-kasm
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: doubtfulturnip
+  WORKSPACE_IMAGE_NAME: socialanalyzer-kasm
+  APP_IMAGE_NAME: socialanalyzer-app
+  WORKSPACE_VERSION: 1.18.0
 
 jobs:
   build-workspace:
@@ -22,15 +28,47 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Set image metadata
+        id: meta
+        run: |
+          SOCIAL_ANALYZER_COMMIT=$(grep -oP 'ARG SOCIAL_ANALYZER_COMMIT=\K[a-f0-9]{40}' SocialAnalyzer-Kasm/Dockerfile | head -1)
+          echo "social_analyzer_commit=$SOCIAL_ANALYZER_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "app_image=${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.APP_IMAGE_NAME }}:$SOCIAL_ANALYZER_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "workspace_image=${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.WORKSPACE_IMAGE_NAME }}:${{ env.WORKSPACE_VERSION }}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare SocialAnalyzer app build context
+        run: |
+          git clone --depth 1 https://github.com/qeeqbox/social-analyzer.git /tmp/social-analyzer-app
+          cd /tmp/social-analyzer-app
+          git fetch --depth 1 origin "${{ steps.meta.outputs.social_analyzer_commit }}"
+          git checkout "${{ steps.meta.outputs.social_analyzer_commit }}"
+          cp "$GITHUB_WORKSPACE/SocialAnalyzer-Kasm/app.Dockerfile" Dockerfile
+          cp "$GITHUB_WORKSPACE/SocialAnalyzer-Kasm/app.dockerignore" .dockerignore
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to Docker Hub
+      - name: Log in to GHCR
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ env.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push SocialAnalyzer app image
+        uses: docker/build-push-action@v7
+        with:
+          context: /tmp/social-analyzer-app
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.app_image }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.APP_IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/qeeqbox/social-analyzer
+            org.opencontainers.image.revision=${{ steps.meta.outputs.social_analyzer_commit }}
+          cache-from: type=gha,scope=socialanalyzer-app
+          cache-to: type=gha,mode=max,scope=socialanalyzer-app
 
       - name: Build and push workspace image
         uses: docker/build-push-action@v7
@@ -38,23 +76,28 @@ jobs:
           context: SocialAnalyzer-Kasm
           platforms: linux/amd64
           push: true
+          build-args: |
+            SOCIAL_ANALYZER_APP_IMAGE=${{ steps.meta.outputs.app_image }}
           tags: |
-            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.0
-            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ steps.meta.outputs.workspace_image }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ env.WORKSPACE_IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/DoubtfulTurnip/kasm-custom-images
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=socialanalyzer-workspace
+          cache-to: type=gha,mode=max,scope=socialanalyzer-workspace
 
       - name: Build summary
         run: |
-          echo "# ✅ SocialAnalyzer Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📦 Image Built and Pushed:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workspace Image:** \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.0\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🚀 Features:" >> $GITHUB_STEP_SUMMARY
-          echo "- Social media profile analysis tool" >> $GITHUB_STEP_SUMMARY
-          echo "- OSINT data collection and correlation" >> $GITHUB_STEP_SUMMARY
-          echo "- Docker-in-Docker configuration" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📋 Usage:" >> $GITHUB_STEP_SUMMARY
-          echo "Update your Kasm workspace to use: \`${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:1.18.0\`" >> $GITHUB_STEP_SUMMARY
+          echo "# SocialAnalyzer Build Complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Images Built and Pushed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Workspace Image: \`${{ steps.meta.outputs.workspace_image }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- App Image: \`${{ steps.meta.outputs.app_image }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Runtime Behavior" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Workspace startup pulls the prebuilt GHCR app image instead of building SocialAnalyzer inside Kasm." >> "$GITHUB_STEP_SUMMARY"
+          echo "- The nested Compose stack no longer starts Selenium hub/node containers." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Usage" >> "$GITHUB_STEP_SUMMARY"
+          echo "Update your Kasm workspace to use: \`${{ steps.meta.outputs.workspace_image }}\`" >> "$GITHUB_STEP_SUMMARY"
