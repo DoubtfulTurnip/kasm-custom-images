@@ -7,6 +7,8 @@ APP_DIR="/opt/social-analyzer"
 APP_URL="http://localhost:9005/app.html"
 LOG_DIR="$HOME/Desktop/Downloads"
 LOG_FILE="$LOG_DIR/socialanalyzer-startup.log"
+DOCKER_INFO_LOG="/tmp/socialanalyzer-docker-info.log"
+DOCKER_CMD=(docker)
 
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -25,9 +27,9 @@ notify() {
 
 dump_compose_diagnostics() {
   log "Docker Compose service status:"
-  docker compose ps || true
+  "${DOCKER_CMD[@]}" compose ps || true
   log "Recent Docker Compose logs:"
-  docker compose logs --tail=200 || true
+  "${DOCKER_CMD[@]}" compose logs --tail=200 || true
 }
 
 fail() {
@@ -40,6 +42,22 @@ fail() {
   exit 1
 }
 
+check_docker_ready() {
+  # Prefer sudo because Docker-in-Docker often exposes the socket to root only.
+  # Use timeout so a wedged daemon/socket cannot stall the startup loop for minutes.
+  if timeout 5 sudo docker info >"$DOCKER_INFO_LOG" 2>&1; then
+    DOCKER_CMD=(sudo docker)
+    return 0
+  fi
+
+  if timeout 5 docker info >"$DOCKER_INFO_LOG" 2>&1; then
+    DOCKER_CMD=(docker)
+    return 0
+  fi
+
+  return 1
+}
+
 # 1) Signal Kasm that desktop is ready
 /usr/bin/desktop_ready || true
 
@@ -49,15 +67,19 @@ sudo service docker start || fail "Docker service failed to start. See $LOG_FILE
 
 log "Waiting for Docker daemon to become ready..."
 for i in {1..30}; do
-  if docker info >/dev/null 2>&1; then
-    log "Docker is ready"
+  if check_docker_ready; then
+    log "Docker is ready using: ${DOCKER_CMD[*]}"
     break
   fi
   log "Docker is not ready yet ($i/30)"
   sleep 2
 done
 
-docker info >/dev/null 2>&1 || fail "Docker did not become ready. See $LOG_FILE"
+if ! check_docker_ready; then
+  log "Last Docker readiness error:"
+  tail -n 40 "$DOCKER_INFO_LOG" || true
+  fail "Docker did not become ready. See $LOG_FILE"
+fi
 
 # 3) Change to the cloned repo (contains docker-compose.yml)
 cd "$APP_DIR" || fail "Could not change to $APP_DIR"
@@ -66,11 +88,11 @@ if [ -f /opt/social-analyzer.UPSTREAM_COMMIT ]; then
   log "SocialAnalyzer upstream commit: $(cat /opt/social-analyzer.UPSTREAM_COMMIT)"
 fi
 
-notify "Starting SocialAnalyzer services…"
+notify "Starting SocialAnalyzer services..."
 
 # 4) Bring up Selenium hub/node + Social-Analyzer web container
 log "Starting Docker Compose services..."
-docker compose up -d --remove-orphans || fail "Docker Compose failed to start SocialAnalyzer services. See $LOG_FILE"
+"${DOCKER_CMD[@]}" compose up -d --remove-orphans || fail "Docker Compose failed to start SocialAnalyzer services. See $LOG_FILE"
 
 # 5) Wait for the web UI to become responsive instead of using a fixed sleep
 log "Waiting for SocialAnalyzer to become responsive at $APP_URL..."
