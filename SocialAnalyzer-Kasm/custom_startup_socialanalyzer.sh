@@ -67,7 +67,7 @@ check_app_ready() {
 # 1) Signal Kasm that desktop is ready
 /usr/bin/desktop_ready || true
 
-# 2) Ensure Docker daemon is running (DinD base auto-launches dockerd)
+# 2) Ensure Docker daemon is running
 log "Starting Docker service..."
 sudo service docker start || fail "Docker service failed to start. See $LOG_FILE"
 
@@ -87,7 +87,7 @@ if ! check_docker_ready; then
   fail "Docker did not become ready. See $LOG_FILE"
 fi
 
-# 3) Change to the cloned repo (contains docker-compose.yml)
+# 3) Change to the Compose directory
 cd "$APP_DIR" || fail "Could not change to $APP_DIR"
 
 if [ -f /opt/social-analyzer.UPSTREAM_COMMIT ]; then
@@ -104,8 +104,6 @@ log "Starting Docker Compose services..."
 "${DOCKER_CMD[@]}" compose up -d --remove-orphans || fail "Docker Compose failed to start SocialAnalyzer services. See $LOG_FILE"
 
 # 5) Wait for the web UI to become responsive before launching a browser.
-# First-run Compose builds/pulls can take several minutes, so keep waiting
-# until the HTTP server answers successfully instead of opening an error page.
 log "Waiting for SocialAnalyzer to become responsive at $APP_URL..."
 ready=false
 for ((i = 1; i <= APP_READY_ATTEMPTS; i++)); do
