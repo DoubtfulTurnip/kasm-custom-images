@@ -120,8 +120,12 @@ jobs:
       - name: Check Epagneul version
         id: epagneul
         run: |
-          CURRENT_VERSION=$(grep -oP '\d+\.\d+\.\d+' Epagneul-Kasm/Dockerfile | head -1)
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/jurelou/epagneul/releases/latest | jq -r .tag_name)
+          CURRENT_VERSION=$(grep -oP 'git clone --branch \K[^ ]+' Epagneul-Kasm/Dockerfile | head -1)
+          LATEST_VERSION=$(curl -fsSL https://api.github.com/repos/jurelou/epagneul/tags?per_page=100 | jq -r '.[].name' | sort -V | tail -1)
+          if [ -z "$CURRENT_VERSION" ] || [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            echo "Unable to determine Epagneul versions (current=$CURRENT_VERSION, latest=$LATEST_VERSION)" >&2
+            exit 1
+          fi
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
