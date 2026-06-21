@@ -1,59 +1,81 @@
-# Custom Images for Kasm
+# Custom Kasm Workspace Images
 
-Source files for my custom [Kasm](https://www.kasmweb.com/) containers. Feel free to modify and customise. I have also enabled my own 3rd party Kasm Workspace Registry.
+Custom [Kasm](https://www.kasmweb.com/) workspace containers for open-source cybersecurity tools, automatically rebuilt when upstream projects release new versions.
 
-## Dockerfile
+Images are published to the [GitHub Container Registry](https://github.com/DoubtfulTurnip?tab=packages).
 
-Each (working) application has a single-app and desktop version available for build. The single-app version is the one I push to dockerhub.
+## Adding the Registry
 
-Read the Custom Images section from [Kasm's documentation](https://www.kasmweb.com/docs/latest/how_to/building_images.html)
+Add the DoubtfulTurnip 3rd party registry to your Kasm instance — see [Kasm's registry documentation](https://kasmweb.com/docs/develop/guide/workspace_registry.html).
 
+Registry URL: `https://doubtfulturnip.github.io/doubtfulturnip-kasm-registry/`
 
-``
-git clone https://github.com/kasmtech/workspaces-images.git
-``
+## Workspaces
 
-``
-cd workspaces-images
-``
+### [TruffleHog](https://github.com/trufflesecurity/trufflehog)
+Secrets scanning tool with a custom Streamlit web interface for running scans without the command line.
+Image: `ghcr.io/doubtfulturnip/trufflehog-kasm:latest`
+License: [AGPL-3.0](https://github.com/trufflesecurity/trufflehog/blob/main/LICENSE)
 
-``
-git clone https://github.com/DoubtfulTurnip/Custom_Images_Kasm.git
-``
+---
 
-``
-sudo docker build -t {application-name}:latest -f Custom_Image_Kasm/{application-name}/dockerfile_custom_{application-name}_{singleapp/desktopapp} .
-``
+### [SherlockWebUI](https://github.com/sherlock-project/sherlock)
+Hunt down social media accounts by username across social networks, wrapped in a Streamlit web interface.
+Image: `ghcr.io/doubtfulturnip/sherlockwebui-kasm:latest`
+License: [MIT](https://github.com/sherlock-project/sherlock/blob/master/LICENSE)
 
-Remove the workspace-images folder if no longer required and then configure your new Kasm Workspace with the {application-name}:latest image that you have just built.
+---
 
+### [SocialAnalyzer](https://github.com/qeeqbox/social-analyzer)
+API, CLI and web application for analysing and finding a person's profile across social media.
+Image: `ghcr.io/doubtfulturnip/socialanalyzer-kasm:latest`
+License: [AGPL-3.0](https://github.com/qeeqbox/social-analyzer/blob/main/LICENSE)
 
-## Doubful Turnip Kasm Registry
+---
 
-For a simpler time just add the Doubtful Turnip registry to your Kasm instance. [Kasm's documentation](https://kasmweb.com/docs/develop/guide/workspace_registry.html)
+### [Takajo](https://github.com/Yamato-Security/takajo)
+EVTX analysis workspace combining Hayabusa (timeline generation), Takajō (post-processing), and Chainsaw (Sigma-based threat hunting).
 
-Just add the DoubtfulTurnip 3rd party registry to your Kasm instance
+- [Hayabusa](https://github.com/Yamato-Security/hayabusa) — [AGPL-3.0](https://github.com/Yamato-Security/hayabusa/blob/main/LICENSE)
+- [Takajō](https://github.com/Yamato-Security/takajo) — [AGPL-3.0](https://github.com/Yamato-Security/takajo/blob/main/LICENSE)
+- [Chainsaw](https://github.com/WithSecureLabs/chainsaw) — [GPL-3.0](https://github.com/WithSecureLabs/chainsaw/blob/master/LICENSE)
 
-https://doubtfulturnip.github.io/doubtful-kasm-registry/
+Image: `ghcr.io/doubtfulturnip/takajo-kasm:latest`
 
+---
 
+### [Webcheck](https://github.com/Lissy93/web-check)
+Comprehensive OSINT tool for analysing any website.
+Image: `ghcr.io/doubtfulturnip/webcheck-kasm:latest`
+License: [MIT](https://github.com/Lissy93/web-check/blob/master/LICENSE)
 
-## Docker Hub
+---
 
-Find the application repository below and add this to the Workspace "Docker Image" field
+### [BloodHound CE](https://github.com/SpecterOps/BloodHound)
+Active Directory and Azure attack path analysis tool.
+Image: `ghcr.io/doubtfulturnip/bloodhound-kasm:latest`
+License: [Apache-2.0](https://github.com/SpecterOps/BloodHound/blob/main/LICENSE)
 
+---
 
-## Current projects in this repo
+### [Epagneul](https://github.com/jurelou/epagneul)
+Windows event log visualisation and analysis tool.
+Image: `ghcr.io/doubtfulturnip/epagneul-kasm:latest`
+Note: Epagneul does not currently carry a license in its repository.
 
-* [LogonTracer](https://github.com/JPCERTCC/LogonTracer)
-  
-  [Docker Hub](https://hub.docker.com/r/bukshee/logontracer-kasm)
-  
-* [Spiderfoot](https://github.com/smicallef/spiderfoot)
+---
 
-  [Docker Hub](https://hub.docker.com/r/bukshee/spiderfoot-kasm)
-  
-* [BloodHound](https://github.com/BloodHoundAD/BloodHound)
+### [Slasher](https://github.com/hexastrike/slasher)
+Web application vulnerability scanner.
+Image: `ghcr.io/doubtfulturnip/slasher-kasm:latest`
+License: [MIT](https://github.com/hexastrike/slasher/blob/main/LICENSE)
 
-  [Docker Hub](https://hub.docker.com/r/bukshee/bloodhound-kasm)
+---
 
+## Building from Source
+
+```bash
+docker build -t <image-name>:latest ./<Workspace-Dir>
+```
+
+See [Kasm's custom image documentation](https://www.kasmweb.com/docs/latest/how_to/building_images.html) for deployment instructions.
