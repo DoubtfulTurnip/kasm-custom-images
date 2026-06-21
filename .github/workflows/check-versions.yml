@@ -7,7 +7,10 @@ on:
 
 permissions:
   contents: write
-  actions: write  # Required to dispatch downstream build workflows
+  actions: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   check-versions:
@@ -20,11 +23,17 @@ jobs:
 
       - name: Check Trufflehog version
         id: trufflehog
+        continue-on-error: true
         run: |
           CURRENT_VERSION=$(grep -oP 'v\d+\.\d+\.\d+' Trufflehog-Kasm/Dockerfile | head -1)
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/trufflesecurity/trufflehog/releases/latest | jq -r .tag_name)
+          LATEST_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/trufflesecurity/trufflehog/releases/latest | jq -r '.tag_name // empty')
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=${LATEST_VERSION:-unknown}" >> $GITHUB_OUTPUT
+          if [[ -z "$LATEST_VERSION" || "$LATEST_VERSION" == "null" ]]; then
+            echo "::warning::Failed to fetch latest Trufflehog version, skipping"
+            exit 0
+          fi
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Trufflehog update available: $CURRENT_VERSION → $LATEST_VERSION"
@@ -32,24 +41,51 @@ jobs:
             sed -i "s|# ─── Install TruffleHog $CURRENT_VERSION|# ─── Install TruffleHog $LATEST_VERSION|g" Trufflehog-Kasm/Dockerfile
           fi
 
+      - name: Check TruffleHog release notes for new scan sources
+        id: trufflehog_notes
+        if: steps.trufflehog.outputs.update_available == 'true'
+        continue-on-error: true
+        run: |
+          NOTES=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/trufflesecurity/trufflehog/releases/latest | jq -r '.body // ""')
+          echo "## ⚠️ TruffleHog Updated — Review for New Scan Sources" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check release notes for new \`trufflehog <source>\` commands that may need a new tab in \`Trufflehog-Kasm/app.py\`:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "$NOTES" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
       - name: Check Sherlock version
         id: sherlock
+        continue-on-error: true
         run: |
           CURRENT_VERSION=$(grep -oP 'sherlock-project==\K[\d.]+' SherlockWebUI-Kasm/requirements.txt | head -1)
-          LATEST_VERSION=$(curl -s https://pypi.org/pypi/sherlock-project/json | jq -r .info.version)
+          LATEST_VERSION=$(curl -s https://pypi.org/pypi/sherlock-project/json | jq -r '.info.version // empty')
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=${LATEST_VERSION:-unknown}" >> $GITHUB_OUTPUT
+          if [[ -z "$LATEST_VERSION" || "$LATEST_VERSION" == "null" ]]; then
+            echo "::warning::Failed to fetch latest Sherlock version, skipping"
+            exit 0
+          fi
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Sherlock update available: $CURRENT_VERSION → $LATEST_VERSION"
             sed -i "s|sherlock-project==$CURRENT_VERSION|sherlock-project==$LATEST_VERSION|g" SherlockWebUI-Kasm/requirements.txt
           fi
 
-      - name: Check SocialAnalyzer version
+      - name: Check SocialAnalyzer commits
         id: socialanalyzer
+        continue-on-error: true
         run: |
           CURRENT_COMMIT=$(grep -oP 'ARG SOCIAL_ANALYZER_COMMIT=\K[a-f0-9]{40}' SocialAnalyzer-Kasm/Dockerfile | head -1)
-          LATEST_COMMIT=$(curl -s https://api.github.com/repos/qeeqbox/social-analyzer/commits/main | jq -r .sha)
+          LATEST_COMMIT=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/qeeqbox/social-analyzer/commits/main | jq -r '.sha // empty')
+          if [[ -z "$LATEST_COMMIT" || "$LATEST_COMMIT" == "null" ]]; then
+            echo "::warning::Failed to fetch latest SocialAnalyzer commit, skipping"
+            echo "current=${CURRENT_COMMIT:0:7}" >> $GITHUB_OUTPUT
+            echo "latest=unknown" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           CURRENT_SHORT="${CURRENT_COMMIT:0:7}"
           LATEST_SHORT="${LATEST_COMMIT:0:7}"
           echo "current=$CURRENT_SHORT" >> $GITHUB_OUTPUT
@@ -64,11 +100,17 @@ jobs:
 
       - name: Check Webcheck version
         id: webcheck
+        continue-on-error: true
         run: |
           CURRENT_VERSION=$(grep -oP 'branch \K\d+\.\d+\.\d+' Webcheck-Kasm/Dockerfile | head -1)
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/Lissy93/web-check/releases/latest | jq -r .tag_name | sed 's/^v//')
+          LATEST_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/Lissy93/web-check/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//')
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=${LATEST_VERSION:-unknown}" >> $GITHUB_OUTPUT
+          if [[ -z "$LATEST_VERSION" || "$LATEST_VERSION" == "null" ]]; then
+            echo "::warning::Failed to fetch latest Webcheck version, skipping"
+            exit 0
+          fi
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Webcheck update available: $CURRENT_VERSION → $LATEST_VERSION"
@@ -77,11 +119,17 @@ jobs:
 
       - name: Check Hayabusa version (Takajo component)
         id: hayabusa
+        continue-on-error: true
         run: |
           CURRENT_VERSION=$(grep -oP 'hayabusa/releases/download/v\K\d+\.\d+\.\d+' Takajo-Kasm/Dockerfile | head -1)
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/Yamato-Security/hayabusa/releases/latest | jq -r .tag_name | sed 's/^v//')
+          LATEST_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/Yamato-Security/hayabusa/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//')
           echo "current=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "latest=v$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=v${LATEST_VERSION:-unknown}" >> $GITHUB_OUTPUT
+          if [[ -z "$LATEST_VERSION" || "$LATEST_VERSION" == "null" ]]; then
+            echo "::warning::Failed to fetch latest Hayabusa version, skipping"
+            exit 0
+          fi
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Hayabusa update available: v$CURRENT_VERSION → v$LATEST_VERSION"
@@ -90,15 +138,20 @@ jobs:
 
       - name: Check Takajo version
         id: takajo
+        continue-on-error: true
         run: |
           CURRENT_VERSION=$(grep -oP 'takajo/releases/download/v\K\d+\.\d+\.\d+' Takajo-Kasm/Dockerfile | head -1)
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/Yamato-Security/takajo/releases/latest | jq -r .tag_name | sed 's/^v//')
+          LATEST_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/Yamato-Security/takajo/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//')
           echo "current=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "latest=v$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=v${LATEST_VERSION:-unknown}" >> $GITHUB_OUTPUT
+          if [[ -z "$LATEST_VERSION" || "$LATEST_VERSION" == "null" ]]; then
+            echo "::warning::Failed to fetch latest Takajō version, skipping"
+            exit 0
+          fi
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Takajo update available: v$CURRENT_VERSION → v$LATEST_VERSION"
-            # Update download URL and binary references
             sed -i "s|takajo/releases/download/v$CURRENT_VERSION/takajo-$CURRENT_VERSION|takajo/releases/download/v$LATEST_VERSION/takajo-$LATEST_VERSION|g" Takajo-Kasm/Dockerfile
             sed -i "s|takajo-$CURRENT_VERSION-lin-x64-gnu|takajo-$LATEST_VERSION-lin-x64-gnu|g" Takajo-Kasm/Dockerfile
             sed -i "s|Install Takajō v$CURRENT_VERSION|Install Takajō v$LATEST_VERSION|g" Takajo-Kasm/Dockerfile
@@ -106,11 +159,17 @@ jobs:
 
       - name: Check Chainsaw version (Takajo component)
         id: chainsaw
+        continue-on-error: true
         run: |
           CURRENT_VERSION=$(grep -oP 'chainsaw/releases/download/v\K\d+\.\d+\.\d+' Takajo-Kasm/Dockerfile | head -1)
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/WithSecureLabs/chainsaw/releases/latest | jq -r .tag_name | sed 's/^v//')
+          LATEST_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/WithSecureLabs/chainsaw/releases/latest | jq -r '.tag_name // empty' | sed 's/^v//')
           echo "current=v$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "latest=v$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=v${LATEST_VERSION:-unknown}" >> $GITHUB_OUTPUT
+          if [[ -z "$LATEST_VERSION" || "$LATEST_VERSION" == "null" ]]; then
+            echo "::warning::Failed to fetch latest Chainsaw version, skipping"
+            exit 0
+          fi
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Chainsaw update available: v$CURRENT_VERSION → v$LATEST_VERSION"
@@ -119,15 +178,17 @@ jobs:
 
       - name: Check Epagneul version
         id: epagneul
+        continue-on-error: true
         run: |
           CURRENT_VERSION=$(grep -oP 'git clone --branch \K[^ ]+' Epagneul-Kasm/Dockerfile | head -1)
-          LATEST_VERSION=$(curl -fsSL https://api.github.com/repos/jurelou/epagneul/tags?per_page=100 | jq -r '.[].name' | sort -V | tail -1)
-          if [ -z "$CURRENT_VERSION" ] || [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
-            echo "Unable to determine Epagneul versions (current=$CURRENT_VERSION, latest=$LATEST_VERSION)" >&2
-            exit 1
-          fi
+          LATEST_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/jurelou/epagneul/tags?per_page=100" | jq -r '.[].name' | sort -V | tail -1)
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "latest=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "latest=${LATEST_VERSION:-unknown}" >> $GITHUB_OUTPUT
+          if [[ -z "$LATEST_VERSION" || "$LATEST_VERSION" == "null" ]]; then
+            echo "::warning::Failed to fetch latest Epagneul version, skipping"
+            exit 0
+          fi
           if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Epagneul update available: $CURRENT_VERSION → $LATEST_VERSION"
@@ -136,19 +197,48 @@ jobs:
 
       - name: Check Slasher commits
         id: slasher
+        continue-on-error: true
         run: |
           CURRENT_COMMIT=$(grep -oP 'git checkout \K[a-f0-9]{40}' Slasher-Kasm/Dockerfile | head -1)
-          LATEST_COMMIT=$(curl -s https://api.github.com/repos/hexastrike/slasher/commits/main | jq -r .sha)
+          LATEST_COMMIT=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/hexastrike/slasher/commits/main | jq -r '.sha // empty')
+          if [[ -z "$LATEST_COMMIT" || "$LATEST_COMMIT" == "null" ]]; then
+            echo "::warning::Failed to fetch latest Slasher commit, skipping"
+            echo "current=${CURRENT_COMMIT:0:7}" >> $GITHUB_OUTPUT
+            echo "latest=unknown" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           CURRENT_SHORT="${CURRENT_COMMIT:0:7}"
           LATEST_SHORT="${LATEST_COMMIT:0:7}"
           echo "current=$CURRENT_SHORT" >> $GITHUB_OUTPUT
           echo "latest=$LATEST_SHORT" >> $GITHUB_OUTPUT
-          echo "current_full=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
-          echo "latest_full=$LATEST_COMMIT" >> $GITHUB_OUTPUT
           if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
             echo "update_available=true" >> $GITHUB_OUTPUT
             echo "::notice::Slasher update available: $CURRENT_SHORT → $LATEST_SHORT"
             sed -i "s|git checkout $CURRENT_COMMIT|git checkout $LATEST_COMMIT|g" Slasher-Kasm/Dockerfile
+          fi
+
+      - name: Check BloodHound commits
+        id: bloodhound
+        continue-on-error: true
+        run: |
+          CURRENT_COMMIT=$(grep -oP '(?<=SpecterOps/bloodhound/)[a-f0-9]{40}' BloodHound-Kasm/Dockerfile | head -1)
+          LATEST_COMMIT=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/SpecterOps/bloodhound/commits/main | jq -r '.sha // empty')
+          if [[ -z "$LATEST_COMMIT" || "$LATEST_COMMIT" == "null" ]]; then
+            echo "::warning::Failed to fetch latest BloodHound commit, skipping"
+            echo "current=${CURRENT_COMMIT:0:7}" >> $GITHUB_OUTPUT
+            echo "latest=unknown" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          CURRENT_SHORT="${CURRENT_COMMIT:0:7}"
+          LATEST_SHORT="${LATEST_COMMIT:0:7}"
+          echo "current=$CURRENT_SHORT" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_SHORT" >> $GITHUB_OUTPUT
+          if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
+            echo "update_available=true" >> $GITHUB_OUTPUT
+            echo "::notice::BloodHound update available: $CURRENT_SHORT → $LATEST_SHORT"
+            sed -i "s|SpecterOps/bloodhound/$CURRENT_COMMIT|SpecterOps/bloodhound/$LATEST_COMMIT|g" BloodHound-Kasm/Dockerfile
           fi
 
       - name: Check for changes
@@ -173,33 +263,26 @@ jobs:
           echo "" >> commit_msg.txt
           echo "Updated versions:" >> commit_msg.txt
 
-          if [ "${{ steps.trufflehog.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.trufflehog.outputs.update_available }}" == "true" ] && \
             echo "- Trufflehog: ${{ steps.trufflehog.outputs.current }} → ${{ steps.trufflehog.outputs.latest }}" >> commit_msg.txt
-          fi
-          if [ "${{ steps.sherlock.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.sherlock.outputs.update_available }}" == "true" ] && \
             echo "- Sherlock: ${{ steps.sherlock.outputs.current }} → ${{ steps.sherlock.outputs.latest }}" >> commit_msg.txt
-          fi
-          if [ "${{ steps.socialanalyzer.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.socialanalyzer.outputs.update_available }}" == "true" ] && \
             echo "- SocialAnalyzer: ${{ steps.socialanalyzer.outputs.current }} → ${{ steps.socialanalyzer.outputs.latest }}" >> commit_msg.txt
-          fi
-          if [ "${{ steps.webcheck.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.webcheck.outputs.update_available }}" == "true" ] && \
             echo "- Webcheck: ${{ steps.webcheck.outputs.current }} → ${{ steps.webcheck.outputs.latest }}" >> commit_msg.txt
-          fi
-          if [ "${{ steps.hayabusa.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.hayabusa.outputs.update_available }}" == "true" ] && \
             echo "- Hayabusa: ${{ steps.hayabusa.outputs.current }} → ${{ steps.hayabusa.outputs.latest }}" >> commit_msg.txt
-          fi
-          if [ "${{ steps.takajo.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.takajo.outputs.update_available }}" == "true" ] && \
             echo "- Takajo: ${{ steps.takajo.outputs.current }} → ${{ steps.takajo.outputs.latest }}" >> commit_msg.txt
-          fi
-          if [ "${{ steps.chainsaw.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.chainsaw.outputs.update_available }}" == "true" ] && \
             echo "- Chainsaw: ${{ steps.chainsaw.outputs.current }} → ${{ steps.chainsaw.outputs.latest }}" >> commit_msg.txt
-          fi
-          if [ "${{ steps.epagneul.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.epagneul.outputs.update_available }}" == "true" ] && \
             echo "- Epagneul: ${{ steps.epagneul.outputs.current }} → ${{ steps.epagneul.outputs.latest }}" >> commit_msg.txt
-          fi
-          if [ "${{ steps.slasher.outputs.update_available }}" == "true" ]; then
+          [ "${{ steps.slasher.outputs.update_available }}" == "true" ] && \
             echo "- Slasher: ${{ steps.slasher.outputs.current }} → ${{ steps.slasher.outputs.latest }}" >> commit_msg.txt
-          fi
+          [ "${{ steps.bloodhound.outputs.update_available }}" == "true" ] && \
+            echo "- BloodHound: ${{ steps.bloodhound.outputs.current }} → ${{ steps.bloodhound.outputs.latest }}" >> commit_msg.txt
 
           echo "" >> commit_msg.txt
           echo "Automated update by check-versions workflow" >> commit_msg.txt
@@ -211,12 +294,10 @@ jobs:
           git push
 
       # Explicitly dispatch each affected build workflow.
-      # This is necessary because GitHub does not trigger workflow runs from
-      # pushes made by GITHUB_TOKEN (only PAT-authenticated pushes cascade).
+      # GITHUB_TOKEN pushes do not cascade to trigger other workflows — only PAT-authenticated
+      # pushes do. We use gh workflow run as a workaround.
       - name: Trigger affected build workflows
         if: steps.check_changes.outputs.has_changes == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           UPDATED_REF="${{ steps.commit_changes.outputs.committed_sha }}"
           if [ -z "$UPDATED_REF" ]; then
@@ -256,6 +337,8 @@ jobs:
             gh workflow run build-slasher.yml --ref "$UPDATED_REF"
             echo "Triggered: build-slasher.yml"
           fi
+          [ "${{ steps.bloodhound.outputs.update_available }}" == "true" ] && \
+            gh workflow run build-bloodhound.yml --ref "$UPDATED_REF" && echo "Triggered: build-bloodhound.yml"
 
       - name: Create summary
         run: |
@@ -272,6 +355,7 @@ jobs:
           echo "| Chainsaw | ${{ steps.chainsaw.outputs.current }} | ${{ steps.chainsaw.outputs.latest }} | ${{ steps.chainsaw.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Epagneul | ${{ steps.epagneul.outputs.current }} | ${{ steps.epagneul.outputs.latest }} | ${{ steps.epagneul.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Slasher | ${{ steps.slasher.outputs.current }} | ${{ steps.slasher.outputs.latest }} | ${{ steps.slasher.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| BloodHound | ${{ steps.bloodhound.outputs.current }} | ${{ steps.bloodhound.outputs.latest }} | ${{ steps.bloodhound.outputs.update_available == 'true' && 'Auto-Updated ✅' || 'Up to Date' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then

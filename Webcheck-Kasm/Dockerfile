@@ -33,8 +33,10 @@ RUN git clone --branch 2.1.0 --depth 1 https://github.com/Lissy93/web-check.git 
     yarn install --frozen-lockfile && \
     yarn build
 
+# Smoke test: verify Node, Yarn, and built output are present
+RUN node --version && yarn --version && test -d /web-check/dist
+
 # Set up the custom startup script that starts Webcheck and then launches Firefox in kiosk mode.
-# (Ensure this file is in your build context.)
 COPY custom_startup_webcheck.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh
 

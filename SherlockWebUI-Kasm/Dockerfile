@@ -28,6 +28,11 @@ RUN mkdir -p $STARTUPDIR && \
     mv /app/custom_startup_sherlock.sh $STARTUPDIR/custom_startup.sh && \
     chmod +x $STARTUPDIR/custom_startup.sh
 
+# Smoke test: verify key tools are present
+RUN /app/venv/bin/pip show sherlock-project > /dev/null && \
+    /app/venv/bin/python -c "import streamlit" && \
+    which tor
+
 # Fix permissions for Kasm profiles
 RUN chown -R 1000:0 /home/kasm-default-profile /app
 

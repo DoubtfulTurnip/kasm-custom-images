@@ -41,6 +41,10 @@ RUN mkdir -p /opt/social-analyzer && \
       > /opt/social-analyzer/docker-compose.yml && \
     chown -R 1000:0 /opt/social-analyzer /opt/social-analyzer.UPSTREAM_COMMIT
 
+# Smoke test: verify compose file and commit marker are in place
+RUN test -f /opt/social-analyzer/docker-compose.yml && \
+    test -f /opt/social-analyzer.UPSTREAM_COMMIT
+
 # Copy in our custom startup script and rename it to custom_startup.sh.
 COPY custom_startup_socialanalyzer.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh && \

@@ -103,12 +103,10 @@ RUN curl -L "https://github.com/WithSecureLabs/chainsaw/releases/download/v2.16.
     ln -s /opt/Chainsaw/sigma    "$HOME/chainsaw-sigma-rules" && \
     ln -s /opt/Chainsaw/mappings "$HOME/chainsaw-mappings"    && \
     ln -s /opt/Chainsaw/rules    "$HOME/chainsaw-rules"
-
-
-
-
-
-
+# Smoke test: verify key tools are installed
+RUN test -f /usr/local/bin/hayabusa && \
+    test -f /usr/local/bin/takajo && \
+    test -f /usr/local/bin/chainsaw
 # 5) Prepare reports directory and desktop usage instructions
 RUN mkdir -p /reports && \
     mkdir -p /home/kasm-default-profile/Desktop && \
