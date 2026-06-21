@@ -1,7 +1,0 @@
-chore: auto-update application versions
-
-Updated versions:
-- Trufflehog: v3.95.5 → v3.95.6
-- Epagneul: 1.19.0 → null
-
-Automated update by check-versions workflow
