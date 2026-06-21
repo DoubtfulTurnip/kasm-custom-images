@@ -96,11 +96,3 @@ updates:
     labels:
       - "dependencies"
       - "python"
-
-  - package-ecosystem: "pip"
-    directory: "/Slasher-Kasm"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-      - "python"
