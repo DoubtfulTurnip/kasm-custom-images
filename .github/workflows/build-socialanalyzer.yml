@@ -19,7 +19,7 @@ env:
   IMAGE_NAMESPACE: doubtfulturnip
   WORKSPACE_IMAGE_NAME: socialanalyzer-kasm
   APP_IMAGE_NAME: socialanalyzer-app
-  WORKSPACE_VERSION: 1.18.0
+  WORKSPACE_VERSION: 1.19.0
 
 jobs:
   build-workspace:
