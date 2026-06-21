@@ -33,6 +33,9 @@ RUN python3 -m venv /opt/slasher/venv && \
     /opt/slasher/venv/bin/pip install --no-cache-dir \
     -r /opt/slasher/backend/requirements.txt
 
+# Smoke test: verify Slasher Django installation
+RUN /opt/slasher/venv/bin/pip show Django > /dev/null && test -d /opt/slasher
+
 # 3) Copy the custom startup script
 COPY custom_startup_slasher.sh $STARTUPDIR/custom_startup.sh
 RUN chmod +x $STARTUPDIR/custom_startup.sh

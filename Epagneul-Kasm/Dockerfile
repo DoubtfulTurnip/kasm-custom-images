@@ -18,6 +18,8 @@ RUN mkdir -p /epagneul && \
 RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin && \
     rm -rf /var/lib/apt/lists/*
 
+# Smoke test: verify epagneul was cloned and git log works
+RUN test -d /epagneul && git -C /epagneul log --oneline -1
 
 # Copy the custom startup script into the container.
 COPY custom_startup_epagneul.sh $STARTUPDIR/custom_startup.sh

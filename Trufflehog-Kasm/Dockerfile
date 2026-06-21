@@ -86,6 +86,17 @@ RUN pip install --upgrade pip && \
 RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | \
     sh -s -- -b /usr/local/bin v3.95.6
 
+# ─── Cache wordlist at build time so Gobuster scans work offline ─────────────
+RUN mkdir -p /usr/share/wordlists && \
+    curl -sSfL "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/raft-small-directories.txt" \
+    -o /usr/share/wordlists/raft-small-directories.txt
+
+# ─── Smoke test: verify key tools and assets are present ─────────────────────
+RUN /usr/local/bin/trufflehog --version && \
+    /app/venv/bin/python -c "import streamlit, requests, pandas, tldextract, bs4" && \
+    which gobuster && \
+    test -f /usr/share/wordlists/raft-small-directories.txt
+
 # ─── Ensure kasm-user can access /app ──────────────────────────────────────
 RUN chown -R 1000:0 /app
 

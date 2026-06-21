@@ -584,17 +584,22 @@ if scan_mode == "Website Scan":
             )
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-            # Download wordlist
-            with st.spinner("Downloading wordlist..."):
-                wl_url = (
-                    "https://raw.githubusercontent.com/danielmiessler/"
-                    "SecLists/master/Discovery/Web-Content/raft-small-directories.txt"
-                )
-                wl_resp = requests.get(wl_url)
-                wl_resp.raise_for_status()
-                tmp_wl = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-                tmp_wl.write(wl_resp.content)
-                tmp_wl.flush()
+            # Use bundled wordlist; fall back to downloading if missing
+            _bundled_wl = "/usr/share/wordlists/raft-small-directories.txt"
+            if os.path.exists(_bundled_wl):
+                wl_path = _bundled_wl
+            else:
+                with st.spinner("Downloading wordlist..."):
+                    wl_url = (
+                        "https://raw.githubusercontent.com/danielmiessler/"
+                        "SecLists/master/Discovery/Web-Content/raft-small-directories.txt"
+                    )
+                    wl_resp = requests.get(wl_url)
+                    wl_resp.raise_for_status()
+                    tmp_wl = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
+                    tmp_wl.write(wl_resp.content)
+                    tmp_wl.flush()
+                    wl_path = tmp_wl.name
 
             # Run Gobuster with progress
             with st.spinner("Running Gobuster..."):
@@ -604,7 +609,7 @@ if scan_mode == "Website Scan":
                     "-u",
                     base_url,
                     "-w",
-                    tmp_wl.name,
+                    wl_path,
                     "-t",
                     str(threads),
                     "-e",
