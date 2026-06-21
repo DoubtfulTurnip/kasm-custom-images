@@ -1,21 +1,19 @@
-# Trufflehog WebUI - Kasm Workspace
+# TruffleHog WebUI — Kasm Workspace
 
-A custom Kasm workspace container featuring a Streamlit-based web interface for [Trufflehog](https://github.com/trufflesecurity/trufflehog), a powerful secret scanning tool.
+A custom Kasm workspace container featuring a Streamlit-based web interface for [TruffleHog](https://github.com/trufflesecurity/trufflehog), a secrets scanning tool by Truffle Security.
 
 ## Features
 
-- **Interactive Web Interface** - User-friendly Streamlit UI for running Trufflehog scans
-- **Multiple Scan Types** - Support for GitHub, GitLab, filesystem, Docker, S3, and more
-- **Advanced Filtering** - Filter results by verification status, detector type, and source
-- **Scan History** - Persistent scan history across sessions
-- **Expandable Results** - Clean, organized display with detailed expandable entries
-- **Verification Explanations** - Built-in tooltips explaining verified vs unverified secrets
-- **Dark Theme** - Optimized dark theme for comfortable viewing
+- **Interactive Web Interface** — Streamlit UI for running TruffleHog scans without the command line
+- **Multiple Scan Types** — GitHub, GitLab, filesystem, Docker, S3, website, Postman, Syslog, Confluence, and more
+- **Gobuster Integration** — Directory brute-forcing with bundled SecLists wordlist
+- **Advanced Filtering** — Filter results by verification status, detector type, and source
+- **Scan History** — Persistent scan history across sessions
+- **Dark Theme** — Optimised for comfortable viewing
 
 ## Supported Scan Types
 
-- GitHub Organization
-- GitHub Repository
+- GitHub Organisation / Repository
 - GitLab
 - Filesystem
 - Git Repository (URL)
@@ -25,49 +23,42 @@ A custom Kasm workspace container featuring a Streamlit-based web interface for 
 - Postman
 - Syslog
 - Confluence
-- And more...
 
 ## Usage
 
-1. Pull the Docker image:
-   ```bash
-   docker pull bukshee/trufflehog-kasm:1.17.0
-   ```
+Pull from GitHub Container Registry:
 
-2. Deploy via Kasm Workspaces or run standalone:
-   ```bash
-   docker run -d -p 6901:6901 bukshee/trufflehog-kasm:1.17.0
-   ```
+```bash
+docker pull ghcr.io/doubtfulturnip/trufflehog-kasm:latest
+```
 
-3. Access the workspace and launch the Trufflehog WebUI from the desktop
-
-## Configuration
-
-The WebUI includes configurable options for:
-- Verification level (verified, unverified, unknown)
-- Custom detector filters
-- Results pagination (10, 25, 50, 100, 200 per page)
-- Scan history management
+Or deploy via the [DoubtfulTurnip Kasm Registry](https://doubtfulturnip.github.io/doubtfulturnip-kasm-registry/).
 
 ## Building from Source
 
 ```bash
 cd Trufflehog-Kasm
-docker build -t trufflehog-kasm:1.17.0 .
+docker build -t trufflehog-kasm:latest .
 ```
 
 ## Base Image
 
-Built on `kasmweb/ubuntu-noble-desktop:1.17.0`
+Built on `kasmweb/ubuntu-noble-desktop:1.19.0-rolling-daily`
 
 ## Components
 
-- **Trufflehog** - Latest version from trufflesecurity/trufflehog
-- **Python 3** - For Streamlit web interface
-- **Streamlit** - Web framework for the UI
-- **Custom Startup Script** - Automated launch configuration
+- **[TruffleHog](https://github.com/trufflesecurity/trufflehog)** — Secrets scanning engine
+- **[Gobuster](https://github.com/OJ/gobuster)** — Directory/file brute-forcing
+- **[Streamlit](https://streamlit.io)** — Web framework for the custom UI
+- **SecLists** — Bundled wordlist for Gobuster scans
 
-## License
+## Attribution and Licensing
 
-This container integrates open-source tools. Please refer to individual tool licenses:
-- Trufflehog: [AGPL-3.0](https://github.com/trufflesecurity/trufflehog/blob/main/LICENSE)
+This workspace packages the following open-source tools. Their licenses apply to the respective components:
+
+- **TruffleHog** by Truffle Security Co. — [AGPL-3.0](https://github.com/trufflesecurity/trufflehog/blob/main/LICENSE) — source: https://github.com/trufflesecurity/trufflehog
+- **Gobuster** by OJ Reeves — [Apache-2.0](https://github.com/OJ/gobuster/blob/master/LICENSE)
+- **Streamlit** — [Apache-2.0](https://github.com/streamlit/streamlit/blob/develop/LICENSE)
+- **SecLists** by Daniel Miessler — [MIT](https://github.com/danielmiessler/SecLists/blob/master/LICENSE)
+
+The custom Streamlit UI and startup scripts in this repository are the original work of [DoubtfulTurnip](https://github.com/DoubtfulTurnip).
