@@ -5,7 +5,7 @@ openpyxl==3.1.5
 pillow>=12.2.0
 beautifulsoup4>=4.15.0
 bs4>=0.0.2
-certifi>=2019.6.16
+certifi>=2026.6.17
 colorama>=0.4.6
 lxml>=6.1.1
 PySocks>=1.7.0
