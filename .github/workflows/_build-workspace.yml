@@ -55,7 +55,7 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/${{ steps.ns.outputs.owner }}/${{ inputs.image_name }}:1.18.0
+            ghcr.io/${{ steps.ns.outputs.owner }}/${{ inputs.image_name }}:1.19.0
             ghcr.io/${{ steps.ns.outputs.owner }}/${{ inputs.image_name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -67,5 +67,5 @@ jobs:
           echo "# ✅ ${LABEL} Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image pushed to GHCR:**" >> $GITHUB_STEP_SUMMARY
-          echo "- \`ghcr.io/${{ steps.ns.outputs.owner }}/${{ inputs.image_name }}:1.18.0\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`ghcr.io/${{ steps.ns.outputs.owner }}/${{ inputs.image_name }}:1.19.0\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`ghcr.io/${{ steps.ns.outputs.owner }}/${{ inputs.image_name }}:latest\`" >> $GITHUB_STEP_SUMMARY
