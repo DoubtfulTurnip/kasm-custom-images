@@ -11,6 +11,7 @@ readonly EPAGNEUL_DIR="/epagneul"
 readonly WEB_UI_URL="http://localhost:8080"
 readonly BACKEND_URL="http://localhost:8000"
 readonly NEO4J_URL="http://localhost:7474"
+COMPOSE_TIMEOUT=600  # seconds for docker compose up --build (scaled by configure_resources)
 
 # Logging functions
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $*" | tee -a "$LOGFILE"; }
@@ -65,15 +66,32 @@ Common issues:
 Check the log file for detailed error information."
     
     notify-send -u critical -t 0 "Epagneul Startup Failed" \
-        "Event log analyzer failed to start. Check Epagneul_Status.txt on desktop."
-    
+        "Event log analyzer failed to start. Check Epagneul_Status.txt on desktop." || true
+
     exit $exit_code
 }
 
 trap 'handle_error $LINENO' ERR
 
+# Detect available RAM and CPU count; scale COMPOSE_TIMEOUT for the source build
+configure_resources() {
+    local total_ram_mb cpu_count
+    total_ram_mb=$(free -m | awk '/^Mem:/{print $2}')
+    cpu_count=$(nproc 2>/dev/null || echo 2)
+    log "System: ${total_ram_mb}MB RAM, ${cpu_count} CPUs"
+
+    if (( total_ram_mb < 4096 || cpu_count < 3 )); then
+        COMPOSE_TIMEOUT=1200
+        log "Low-resource host: COMPOSE_TIMEOUT=${COMPOSE_TIMEOUT}s"
+    elif (( total_ram_mb >= 8192 && cpu_count >= 6 )); then
+        COMPOSE_TIMEOUT=480
+        log "High-resource host: COMPOSE_TIMEOUT=${COMPOSE_TIMEOUT}s"
+    fi
+}
+
 # Clean up existing containers
 cleanup_existing() {
+    docker info >/dev/null 2>&1 || return 0  # skip if Docker not yet running
     log "Cleaning up any existing Epagneul containers"
     
     # Remove containers that might conflict
@@ -139,10 +157,7 @@ Services starting:
 
 First startup includes building containers from source and may take 3-5 minutes."
     
-    # Generate unique project name
-    local timestamp=$(date +%s)
-    local random_id=$(shuf -i 1000-9999 -n 1 2>/dev/null || echo $RANDOM)
-    PROJECT_NAME="epagneul-${timestamp}-${random_id}"
+    PROJECT_NAME="epagneul"
     export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
     
     log "Using project name: $PROJECT_NAME"
@@ -179,15 +194,15 @@ Services have been built and are now starting up."
         local frontend_ready=0
         
         # Check each service
-        if curl -sf "$NEO4J_URL" >/dev/null 2>&1; then
+        if curl -sf --max-time 3 "$NEO4J_URL" >/dev/null 2>&1; then
             neo4j_ready=1
         fi
-        
-        if curl -sf "$BACKEND_URL" >/dev/null 2>&1; then
+
+        if curl -sf --max-time 3 "$BACKEND_URL" >/dev/null 2>&1; then
             backend_ready=1
         fi
-        
-        if curl -sf "$WEB_UI_URL" >/dev/null 2>&1; then
+
+        if curl -sf --max-time 3 "$WEB_UI_URL" >/dev/null 2>&1; then
             frontend_ready=1
         fi
         
@@ -219,9 +234,9 @@ Containers have been built and are initializing."
         # Show container status for debugging
         docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" ps | tee -a "$LOGFILE"
         
-        # Check if any service is at least partially working
-        if [[ $backend_ready -eq 1 || $neo4j_ready -eq 1 ]]; then
-            warn "Some services are ready, continuing with launch"
+        # The frontend is the user-facing endpoint — require it as the minimum
+        if [[ $frontend_ready -eq 1 ]]; then
+            warn "Frontend is ready; backend/Neo4j may still be initialising"
         else
             error "No services are responding, startup may have failed"
             docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs --tail=50 | tee -a "$LOGFILE"
@@ -234,24 +249,11 @@ Containers have been built and are initializing."
 
 # Launch browser
 launch_browser() {
-    log "Preparing to launch browser"
-    
-    # Final verification that web interface is responding
-    for i in {1..15}; do
-        if curl -sf "$WEB_UI_URL" >/dev/null 2>&1; then
-            log "Web interface confirmed ready, launching browser"
-            break
-        fi
-        log "Web interface not ready, waiting... ($i/15)"
-        sleep 3
-    done
-    
-    sleep 2  # Small delay for UI to fully render
-    
     log "Launching browser for Epagneul web interface"
-    
-    # Launch Chrome with container-friendly flags
-    if google-chrome \
+    # wait_for_services already confirmed the frontend is ready; one last best-effort check
+    curl -sf --max-time 3 "$WEB_UI_URL" >/dev/null 2>&1 || true
+
+    google-chrome \
         --no-sandbox \
         --disable-dev-shm-usage \
         --start-maximized \
@@ -259,26 +261,7 @@ launch_browser() {
         --no-default-browser-check \
         --disable-extensions \
         "$WEB_UI_URL" >/dev/null 2>&1 &
-    then
-        log "Browser launched successfully"
-    else
-        warn "Browser launch may have failed"
-        
-        # Create desktop shortcut as fallback
-        cat > "$DESKTOP_DIR/Open_Epagneul.desktop" <<EOF
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Open Epagneul  
-Comment=Launch Epagneul Web Interface
-Exec=google-chrome --no-sandbox $WEB_UI_URL
-Icon=web-browser
-Terminal=false
-Categories=Network;WebBrowser;
-EOF
-        chmod +x "$DESKTOP_DIR/Open_Epagneul.desktop"
-        log "Created desktop shortcut as fallback"
-    fi
+    log "Browser launched"
 }
 
 # Create user guide
@@ -384,12 +367,26 @@ Ready to investigate Windows event logs!"
     # Create user guide
     create_user_guide
     
+    # Desktop shortcut as a persistent convenience launcher
+    cat > "$DESKTOP_DIR/Open_Epagneul.desktop" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Open Epagneul
+Comment=Launch Epagneul Web Interface
+Exec=google-chrome --no-sandbox $WEB_UI_URL
+Icon=web-browser
+Terminal=false
+Categories=Network;WebBrowser;
+EOF
+    chmod +x "$DESKTOP_DIR/Open_Epagneul.desktop"
+
     # Success notification
     notify-send -t 15000 "🔍 Epagneul Ready!" \
         "Windows Event Log Analyzer is ready!
 🌐 Web Interface: $WEB_UI_URL
 🔧 Runtime build deployment completed
-📖 Check desktop for user guide and status"
+📖 Check desktop for user guide and status" || true
     
     log "Epagneul startup completed successfully"
 }
@@ -417,8 +414,8 @@ EOF
         "Windows Event Log Analyzer starting...
 🔧 Using runtime build approach
 Expected time: 3-5 minutes (first run)
-Progress updates on desktop"
-    
+Progress updates on desktop" || true
+
     # Initial status
     update_status "🚀 INITIALIZING" "Starting Epagneul deployment with runtime build...
 
@@ -427,23 +424,22 @@ First startup includes building containers and may take 3-5 minutes.
 
 Features:
 • Graph-based Windows event log analysis
-• Timeline visualization  
+• Timeline visualization
 • Relationship mapping
 • Neo4j backend for complex queries
 
 Status will update automatically as services build and start."
-    
+
     # Execute startup sequence
+    configure_resources
     cleanup_existing
     start_docker
     find_compose_file
     start_stack
     wait_for_services
-    launch_browser  
+    launch_browser
     finalize_setup
-    
-    # Brief pause for stability
-    sleep 3
+
     log "All startup tasks completed successfully"
 }
 
