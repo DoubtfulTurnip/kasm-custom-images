@@ -53,6 +53,7 @@ jobs:
           platforms: linux/amd64
           push: false
           cache-from: type=gha
+          allow: security.insecure
 
   ci:
     needs: [detect, build]
