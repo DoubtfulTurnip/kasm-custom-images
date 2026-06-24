@@ -299,13 +299,11 @@ jobs:
       - name: Trigger affected build workflows
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          UPDATED_REF="${{ steps.commit_changes.outputs.committed_sha }}"
-          if [ -z "$UPDATED_REF" ]; then
-            echo "No committed SHA was recorded; refusing to dispatch builds against a stale ref." >&2
-            exit 1
-          fi
+          # gh workflow run requires a branch or tag name, not a commit SHA.
+          # The version-bump commit was just pushed to main, so main HEAD == the update.
+          UPDATED_REF="main"
 
-          echo "Dispatching build workflows at updated ref: $UPDATED_REF"
+          echo "Dispatching build workflows at ref: $UPDATED_REF"
 
           if [ "${{ steps.trufflehog.outputs.update_available }}" == "true" ]; then
             gh workflow run build-trufflehog.yml --ref "$UPDATED_REF"
