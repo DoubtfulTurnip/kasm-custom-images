@@ -1,5 +1,6 @@
 #!/bin/bash
-# Simplified Epagneul startup script for Kasm (runtime Docker build)
+# Epagneul startup script for Kasm
+# Service images are pre-built into the workspace image; startup loads them via docker load.
 
 set -euo pipefail
 
@@ -8,10 +9,10 @@ readonly DESKTOP_DIR="$HOME/Desktop"
 readonly LOGFILE="$DESKTOP_DIR/Epagneul_startup.log"
 readonly STATUS_FILE="$DESKTOP_DIR/Epagneul_Status.txt"
 readonly EPAGNEUL_DIR="/epagneul"
+readonly PREBUILT_ARCHIVE="/epagneul-prebuilt.tar.gz"
 readonly WEB_UI_URL="http://localhost:8080"
 readonly BACKEND_URL="http://localhost:8000"
 readonly NEO4J_URL="http://localhost:7474"
-COMPOSE_TIMEOUT=600  # seconds for docker compose up --build (scaled by configure_resources)
 
 # Logging functions
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $*" | tee -a "$LOGFILE"; }
@@ -73,22 +74,6 @@ Check the log file for detailed error information."
 
 trap 'handle_error $LINENO' ERR
 
-# Detect available RAM and CPU count; scale COMPOSE_TIMEOUT for the source build
-configure_resources() {
-    local total_ram_mb cpu_count
-    total_ram_mb=$(free -m | awk '/^Mem:/{print $2}')
-    cpu_count=$(nproc 2>/dev/null || echo 2)
-    log "System: ${total_ram_mb}MB RAM, ${cpu_count} CPUs"
-
-    if (( total_ram_mb < 4096 || cpu_count < 3 )); then
-        COMPOSE_TIMEOUT=1200
-        log "Low-resource host: COMPOSE_TIMEOUT=${COMPOSE_TIMEOUT}s"
-    elif (( total_ram_mb >= 8192 && cpu_count >= 6 )); then
-        COMPOSE_TIMEOUT=480
-        log "High-resource host: COMPOSE_TIMEOUT=${COMPOSE_TIMEOUT}s"
-    fi
-}
-
 # Clean up existing containers
 cleanup_existing() {
     docker info >/dev/null 2>&1 || return 0  # skip if Docker not yet running
@@ -148,42 +133,50 @@ find_compose_file() {
 
 # Start the application stack
 start_stack() {
-    log "Starting Epagneul application stack"
-    update_status "⏳ BUILDING" "Building and starting Epagneul services...
-
-Services starting:
-• 🌐 Main Epagneul application (includes web interface)
-• 🗄️ Neo4j Graph Database (if configured)
-
-First startup includes building containers from source and may take 3-5 minutes."
-    
     PROJECT_NAME="epagneul"
     export COMPOSE_PROJECT_NAME="$PROJECT_NAME"
-    
     log "Using project name: $PROJECT_NAME"
-    log "Working directory: $(pwd)"
     log "Compose file: $COMPOSE_FILE"
-    
-    # Start services with compose (extended timeout for build)
-    if timeout 600 docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d --build; then
-        log "Services started successfully"
+
+    if [[ -f "$PREBUILT_ARCHIVE" ]]; then
+        log "Loading pre-built Epagneul images from archive..."
+        update_status "⏳ LOADING" "Loading pre-built Epagneul containers...
+
+Expected startup time: under 1 minute.
+
+Services being loaded:
+• 🌐 Frontend web interface
+• ⚙️ Backend API
+• 🗄️ Neo4j Graph Database"
+
+        docker load -i "$PREBUILT_ARCHIVE"
+        docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d
+        log "Services started successfully from pre-built archive"
     else
-        error "Failed to start services within timeout"
-        docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs --tail=50 | tee -a "$LOGFILE" 2>&1 || true
-        return 1
+        # Fallback: runtime source build (slow — pre-built archive should normally be present)
+        log "Pre-built archive not found — falling back to runtime source build (this will take several minutes)"
+        update_status "⏳ BUILDING" "Building Epagneul containers from source (fallback mode)...
+
+This may take 5-10 minutes on first run."
+
+        if timeout 1200 docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d --build; then
+            log "Services started successfully via runtime build"
+        else
+            error "Failed to start services"
+            docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs --tail=50 | tee -a "$LOGFILE" 2>&1 || true
+            return 1
+        fi
     fi
 }
 
 # Wait for all services to be healthy
 wait_for_services() {
     log "Waiting for services to become healthy"
-    update_status "⌛ STARTING" "Services are starting up after build...
+    update_status "⌛ STARTING" "Services are initializing...
 
 🗄️ Neo4j Database: Initializing (1-2 minutes)
-⚙️ Backend API: Starting after build (30-60s)
-🌐 Web Interface: Starting after build (30-60s)
-
-Services have been built and are now starting up."
+⚙️ Backend API: Starting (30-60s)
+🌐 Web Interface: Starting (30-60s)"
     
     local max_wait=300  # 5 minutes total wait time
     local services_ready=0
@@ -214,7 +207,7 @@ Services have been built and are now starting up."
 ⚙️ Backend API: $([ $backend_ready -eq 1 ] && echo "✅ Ready" || echo "⏳ Starting")
 🌐 Web Interface: $([ $frontend_ready -eq 1 ] && echo "✅ Ready" || echo "⏳ Starting")
 
-Containers have been built and are initializing."
+Containers are initializing."
             
             update_status "⌛ STARTING" "$status_msg"
         fi
@@ -271,7 +264,6 @@ create_user_guide() {
     cat > "$DESKTOP_DIR/Epagneul_User_Guide.txt" <<EOF
 === Epagneul Windows Event Log Analyzer ===
 Started: $(date)
-Deployment: Runtime Docker build approach
 
 🎯 PURPOSE:
 Epagneul is a powerful tool for visualizing and investigating Windows event logs
@@ -283,10 +275,10 @@ using graph-based analysis to reveal relationships between hosts, users, and log
 • Neo4j Browser: $NEO4J_URL (Graph database)
 
 🚀 DEPLOYMENT FEATURES:
-• Runtime Docker container builds from source
+• Pre-built container images loaded at startup (fast)
 • Uses official Epagneul docker-compose configuration
 • Reliable container orchestration with Docker-in-Docker
-• Expected startup time: 3-5 minutes (first run), 1-2 minutes (subsequent)
+• Expected startup time: under 1 minute
 
 📊 KEY FEATURES:
 • Graph visualization of Windows logon events
@@ -322,10 +314,9 @@ Restart: docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" restart
 • EVTX Format: Windows Event Log Analysis
 
 💡 TROUBLESHOOTING:
-• If web UI doesn't load: Check $WEB_UI_URL in browser, may need more build time
+• If web UI doesn't load: Check $WEB_UI_URL in browser; Neo4j takes ~60s to initialise
 • If upload fails: Verify backend API at $BACKEND_URL
 • If graphs don't appear: Ensure Neo4j at $NEO4J_URL, check data import
-• For build failures: Check logs for Python/Node.js dependency errors
 • For slow performance: Check container resources, restart services if needed
 
 🔍 ANALYSIS TIPS:
@@ -351,10 +342,9 @@ finalize_setup() {
     
     update_status "✅ READY" "Epagneul is ready for Windows event log analysis!
 
-🌐 Access: $WEB_UI_URL  
+🌐 Access: $WEB_UI_URL
 📖 User Guide: See Epagneul_User_Guide.txt
 📊 Services: $running_containers/$total_containers containers running
-🔧 Build: Runtime container build completed
 
 🚀 QUICK START:
 1. Browser opened automatically to web interface
@@ -385,7 +375,6 @@ EOF
     notify-send -t 15000 "🔍 Epagneul Ready!" \
         "Windows Event Log Analyzer is ready!
 🌐 Web Interface: $WEB_UI_URL
-🔧 Runtime build deployment completed
 📖 Check desktop for user guide and status" || true
     
     log "Epagneul startup completed successfully"
@@ -398,29 +387,24 @@ main() {
     
     # Initialize log file
     cat > "$LOGFILE" <<EOF
-=== Epagneul Runtime Build Startup Log ===
+=== Epagneul Startup Log ===
 Started: $(date)
 Workspace: $(hostname)
 User: $(whoami)
-Approach: Runtime Docker container build
-==========================================
+===========================
 
 EOF
     
-    log "Starting Epagneul deployment with runtime build approach"
-    
+    log "Starting Epagneul deployment"
+
     # Initial notification
     notify-send -t 10000 "🔍 Epagneul Starting" \
         "Windows Event Log Analyzer starting...
-🔧 Using runtime build approach
-Expected time: 3-5 minutes (first run)
+Expected time: under 1 minute
 Progress updates on desktop" || true
 
     # Initial status
-    update_status "🚀 INITIALIZING" "Starting Epagneul deployment with runtime build...
-
-This version builds containers from source at startup for maximum compatibility.
-First startup includes building containers and may take 3-5 minutes.
+    update_status "🚀 INITIALIZING" "Starting Epagneul...
 
 Features:
 • Graph-based Windows event log analysis
@@ -428,10 +412,9 @@ Features:
 • Relationship mapping
 • Neo4j backend for complex queries
 
-Status will update automatically as services build and start."
+Status will update automatically."
 
     # Execute startup sequence
-    configure_resources
     cleanup_existing
     start_docker
     find_compose_file
