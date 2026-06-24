@@ -16,6 +16,11 @@ on:
         required: false
         type: string
         default: ""
+      allow:
+        description: "BuildKit entitlements to allow (e.g. 'security.insecure' for DinD pre-builds)"
+        required: false
+        type: string
+        default: ""
 
 # Callers must grant packages: write for GHCR push to succeed.
 # contents: read is inherited from the default token.
@@ -59,6 +64,7 @@ jobs:
             ghcr.io/${{ steps.ns.outputs.owner }}/${{ inputs.image_name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          allow: ${{ inputs.allow }}
 
       - name: Build summary
         run: |
