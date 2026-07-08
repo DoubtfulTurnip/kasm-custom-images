@@ -88,6 +88,9 @@ updates:
     labels:
       - "dependencies"
       - "python"
+    ignore:
+      - dependency-name: "pandas"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "pip"
     directory: "/Trufflehog-Kasm"
