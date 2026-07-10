@@ -12,7 +12,7 @@ WORKDIR $HOME
 
 # Create a working folder for BloodHound and download the docker-compose YAML file (pinned commit).
 RUN mkdir -p /bloodhound && \
-    curl -fL "https://raw.githubusercontent.com/SpecterOps/bloodhound/a8549f2f92c70b446691c2ecbc7a48db78c05fd7/examples/docker-compose/docker-compose.yml" \
+    curl -fL "https://raw.githubusercontent.com/SpecterOps/bloodhound/fb37861846b4aded05f12e40b7ab1238c2af4942/examples/docker-compose/docker-compose.yml" \
     -o /bloodhound/docker-compose.yml
 
 RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin && \
