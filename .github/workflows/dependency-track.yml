@@ -1,29 +1,75 @@
-- name: Upload SBOM to Dependency-Track
-  shell: bash
-  env:
-    DEPENDENCYTRACK_API_KEY: ${{ secrets.DEPENDENCYTRACK_API_KEY }}
-  run: |
-    HTTP_STATUS="$(
-      curl \
-        --silent \
-        --show-error \
-        --output dependency-track-response.txt \
-        --write-out '%{http_code}' \
-        --request POST \
-        --header "X-Api-Key: ${DEPENDENCYTRACK_API_KEY}" \
-        --form "autoCreate=true" \
-        --form "projectName=${{ github.event.repository.name }}" \
-        --form "projectVersion=main" \
-        --form "bom=@bom.json;type=application/json" \
-        "https://deptrack.skullnet.co.uk/api/v1/bom"
-    )"
+name: Dependency-Track SBOM
 
-    echo "Dependency-Track returned HTTP ${HTTP_STATUS}"
-    echo
-    echo "Response body:"
-    cat dependency-track-response.txt
-    echo
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
-    if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
-      exit 1
-    fi
+permissions:
+  contents: read
+
+jobs:
+  dependency-track:
+    name: Generate and upload SBOM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          npx --yes @cyclonedx/cdxgen@latest \
+            --output bom.json \
+            .
+
+      - name: Validate generated SBOM
+        run: |
+          test -s bom.json
+          ls -lh bom.json
+
+      - name: Upload SBOM and show response
+        shell: bash
+        env:
+          DEPENDENCYTRACK_API_KEY: ${{ secrets.DEPENDENCYTRACK_API_KEY }}
+        run: |
+          HTTP_STATUS="$(
+            curl \
+              --silent \
+              --show-error \
+              --output dependency-track-response.txt \
+              --write-out '%{http_code}' \
+              --request POST \
+              --header "X-Api-Key: ${DEPENDENCYTRACK_API_KEY}" \
+              --form "autoCreate=true" \
+              --form "projectName=${{ github.event.repository.name }}" \
+              --form "projectVersion=main" \
+              --form "bom=@bom.json;type=application/json" \
+              "https://deptrack.skullnet.co.uk/api/v1/bom"
+          )"
+
+          echo "Dependency-Track returned HTTP ${HTTP_STATUS}"
+          echo "Response body:"
+          cat dependency-track-response.txt
+          echo
+
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+            exit 1
+          fi
+
+      - name: Save diagnostic files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-track-diagnostics
+          path: |
+            bom.json
+            dependency-track-response.txt
+          if-no-files-found: warn
+          retention-days: 14
