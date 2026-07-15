@@ -43,10 +43,8 @@ jobs:
           apikey: ${{ secrets.DEPENDENCYTRACK_API_KEY }}
           projectname: ${{ github.event.repository.name }}
           projectversion: main
-          projecttags: github,test
           bomfilename: bom.json
           autocreate: true
-          isLatest: true
 
       - name: Save SBOM as GitHub artefact
         uses: actions/upload-artifact@v4
