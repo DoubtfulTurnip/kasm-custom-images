@@ -1,0 +1,56 @@
+name: Dependency-Track SBOM
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-track:
+    name: Generate and upload SBOM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          npx --yes @cyclonedx/cdxgen@latest \
+            --output bom.json \
+            .
+
+      - name: Validate generated SBOM
+        run: |
+          test -s bom.json
+          ls -lh bom.json
+
+      - name: Upload SBOM to Dependency-Track
+        uses: DependencyTrack/gh-upload-sbom@v4
+        with:
+          protocol: https
+          serverhostname: deptrack.skullnet.co.uk
+          port: 443
+          apikey: ${{ secrets.DEPENDENCYTRACK_API_KEY }}
+          projectname: ${{ github.event.repository.name }}
+          projectversion: main
+          projecttags: github,test
+          bomfilename: bom.json
+          autocreate: true
+          isLatest: true
+
+      - name: Save SBOM as GitHub artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyclonedx-sbom
+          path: bom.json
+          retention-days: 14
