@@ -1,54 +1,29 @@
-name: Dependency-Track SBOM
+- name: Upload SBOM to Dependency-Track
+  shell: bash
+  env:
+    DEPENDENCYTRACK_API_KEY: ${{ secrets.DEPENDENCYTRACK_API_KEY }}
+  run: |
+    HTTP_STATUS="$(
+      curl \
+        --silent \
+        --show-error \
+        --output dependency-track-response.txt \
+        --write-out '%{http_code}' \
+        --request POST \
+        --header "X-Api-Key: ${DEPENDENCYTRACK_API_KEY}" \
+        --form "autoCreate=true" \
+        --form "projectName=${{ github.event.repository.name }}" \
+        --form "projectVersion=main" \
+        --form "bom=@bom.json;type=application/json" \
+        "https://deptrack.skullnet.co.uk/api/v1/bom"
+    )"
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+    echo "Dependency-Track returned HTTP ${HTTP_STATUS}"
+    echo
+    echo "Response body:"
+    cat dependency-track-response.txt
+    echo
 
-permissions:
-  contents: read
-
-jobs:
-  dependency-track:
-    name: Generate and upload SBOM
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Generate CycloneDX SBOM
-        run: |
-          npx --yes @cyclonedx/cdxgen@latest \
-            --output bom.json \
-            .
-
-      - name: Validate generated SBOM
-        run: |
-          test -s bom.json
-          ls -lh bom.json
-
-      - name: Upload SBOM to Dependency-Track
-        uses: DependencyTrack/gh-upload-sbom@v4
-        with:
-          protocol: https
-          serverhostname: deptrack.skullnet.co.uk
-          port: 443
-          apikey: ${{ secrets.DEPENDENCYTRACK_API_KEY }}
-          projectname: ${{ github.event.repository.name }}
-          projectversion: main
-          bomfilename: bom.json
-          autocreate: true
-
-      - name: Save SBOM as GitHub artefact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cyclonedx-sbom
-          path: bom.json
-          retention-days: 14
+    if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+      exit 1
+    fi
