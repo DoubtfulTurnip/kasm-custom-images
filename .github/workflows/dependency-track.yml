@@ -12,7 +12,9 @@ permissions:
 jobs:
   dependency-track:
     name: Generate and upload SBOM
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - dependency-track
 
     steps:
       - name: Check out repository
@@ -51,7 +53,7 @@ jobs:
               --form "projectName=${{ github.event.repository.name }}" \
               --form "projectVersion=main" \
               --form "bom=@bom.json;type=application/json" \
-              "https://deptrack.skullnet.co.uk/api/v1/bom"
+              "http://apiserver:8080/api/v1/bom"
           )"
 
           echo "Dependency-Track returned HTTP ${HTTP_STATUS}"
