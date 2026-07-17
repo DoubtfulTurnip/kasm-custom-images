@@ -28,6 +28,7 @@ jobs:
       - name: Generate CycloneDX SBOM
         run: |
           npx --yes @cyclonedx/cdxgen@latest \
+            --spec-version 1.6 \
             --output bom.json \
             .
 
@@ -35,6 +36,17 @@ jobs:
         run: |
           test -s bom.json
           ls -lh bom.json
+
+          node -e '
+            const bom = require("./bom.json");
+            console.log(`CycloneDX specification: ${bom.specVersion}`);
+            console.log(`Components: ${(bom.components || []).length}`);
+
+            if (bom.specVersion !== "1.6") {
+              console.error("Expected CycloneDX 1.6");
+              process.exit(1);
+            }
+          '
 
       - name: Upload SBOM and show response
         shell: bash
