@@ -8,5 +8,9 @@ on:
 jobs:
   pr_agent:
     uses: DoubtfulTurnip/.github/.github/workflows/pr-agent.yml@main
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
     secrets:
       openrouter-key: ${{ secrets.OPENROUTER_API_KEY }}
