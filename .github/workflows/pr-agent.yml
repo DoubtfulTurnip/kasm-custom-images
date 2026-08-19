@@ -1,0 +1,12 @@
+name: PR Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+  issue_comment:
+
+jobs:
+  pr_agent:
+    uses: DoubtfulTurnip/.github/.github/workflows/pr-agent.yml@main
+    secrets:
+      openrouter-key: ${{ secrets.OPENROUTER_API_KEY }}
