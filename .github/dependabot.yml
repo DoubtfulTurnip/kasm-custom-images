@@ -12,6 +12,9 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    groups:
+      github-actions-minor-patch:
+        update-types: ["minor", "patch"]
 
   # Monitor Docker base images - Kasm workspaces
   - package-ecosystem: "docker"
@@ -23,6 +26,9 @@ updates:
       - "docker"
     commit-message:
       prefix: "chore"
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
     directory: "/Epagneul-Kasm"
@@ -31,6 +37,9 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
     directory: "/SherlockWebUI-Kasm"
@@ -39,7 +48,9 @@ updates:
     labels:
       - "dependencies"
       - "docker"
-
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
   - package-ecosystem: "docker"
     directory: "/Slasher-Kasm"
     schedule:
@@ -47,6 +58,9 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
     directory: "/SocialAnalyzer-Kasm"
@@ -55,6 +69,9 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
     directory: "/Takajo-Kasm"
@@ -63,7 +80,9 @@ updates:
     labels:
       - "dependencies"
       - "docker"
-
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
   - package-ecosystem: "docker"
     directory: "/Trufflehog-Kasm"
     schedule:
@@ -71,6 +90,9 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker"
     directory: "/Webcheck-Kasm"
@@ -79,6 +101,9 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
 
   # Monitor Python dependencies
   - package-ecosystem: "pip"
@@ -91,6 +116,9 @@ updates:
     ignore:
       - dependency-name: "pandas"
         update-types: ["version-update:semver-major"]
+    groups:
+      pip-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "pip"
     directory: "/Trufflehog-Kasm"
@@ -99,3 +127,6 @@ updates:
     labels:
       - "dependencies"
       - "python"
+    groups:
+      pip-minor-patch:
+        update-types: ["minor", "patch"]
