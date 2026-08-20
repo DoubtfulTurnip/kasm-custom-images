@@ -1,0 +1,37 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:20327cc1-b77a-4d7a-a126-99614ff96d97",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-08-20T10:00:00Z",
+    "component": {
+      "type": "application",
+      "name": "kasm-custom-images",
+      "version": "main"
+    }
+  },
+  "vulnerabilities": [
+    {
+      "bom-ref": "urn:uuid:cfd264ee-c819-4623-85a4-04c613efdc68",
+      "id": "CVE-2020-13091",
+      "source": {
+        "name": "NVD",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2020-13091"
+      },
+      "analysis": {
+        "state": "not_affected",
+        "justification": "code_not_present",
+        "detail": "NVD limits the affected range to pandas through 1.0.3. The project contains pandas 2.2.1 and 3.0.5, so neither component is within the affected range. NVD also marks the advisory as disputed because read_pickle documents that untrusted pickle data is unsafe."
+      },
+      "affects": [
+        {
+          "ref": "pkg:pypi/pandas@2.2.1"
+        },
+        {
+          "ref": "pkg:pypi/pandas@3.0.5"
+        }
+      ]
+    }
+  ]
+}

@@ -11,3 +11,62 @@ jobs:
     uses: DoubtfulTurnip/.github/.github/workflows/dependency-track-sbom.yml@main
     secrets:
       dependencytrack-api-key: ${{ secrets.DEPENDENCYTRACK_API_KEY }}
+
+  dependency-track-vex:
+    name: Upload vulnerability analysis
+    needs: dependency-track
+    runs-on:
+      - self-hosted
+      - dependency-track
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate VEX document
+        run: |
+          node -e '
+            const vex = require("./.dependency-track/vex.cdx.json");
+            if (vex.bomFormat !== "CycloneDX" || vex.specVersion !== "1.6") process.exit(1);
+            if (!Array.isArray(vex.vulnerabilities) || vex.vulnerabilities.length === 0) process.exit(1);
+            console.log(`Validated ${vex.vulnerabilities.length} VEX entry`);
+          '
+
+      - name: Upload VEX to Dependency-Track
+        shell: bash
+        env:
+          DEPENDENCYTRACK_API_KEY: ${{ secrets.DEPENDENCYTRACK_API_KEY }}
+        run: |
+          HTTP_STATUS="$(
+            curl \
+              --silent \
+              --show-error \
+              --output dependency-track-vex-response.txt \
+              --write-out '%{http_code}' \
+              --request POST \
+              --header "X-Api-Key: ${DEPENDENCYTRACK_API_KEY}" \
+              --form "projectName=${{ github.event.repository.name }}" \
+              --form "projectVersion=${{ github.ref_name }}" \
+              --form "vex=@.dependency-track/vex.cdx.json;type=application/json" \
+              "http://apiserver:8080/api/v1/vex"
+          )"
+
+          echo "Dependency-Track VEX upload returned HTTP ${HTTP_STATUS}"
+          cat dependency-track-vex-response.txt
+          echo
+
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+            exit 1
+          fi
+
+      - name: Save VEX diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-track-vex-diagnostics
+          path: |
+            .dependency-track/vex.cdx.json
+            dependency-track-vex-response.txt
+          if-no-files-found: warn
+          retention-days: 14
