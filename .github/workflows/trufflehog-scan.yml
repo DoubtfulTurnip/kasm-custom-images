@@ -1,0 +1,12 @@
+name: Secret scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  trufflehog:
+    uses: DoubtfulTurnip/.github/.github/workflows/trufflehog-scan.yml@main
+    permissions:
+      contents: read
