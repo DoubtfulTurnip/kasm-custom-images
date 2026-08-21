@@ -11,6 +11,22 @@
       "version": "main"
     }
   },
+  "components": [
+    {
+      "type": "library",
+      "name": "pandas",
+      "version": "2.2.1",
+      "purl": "pkg:pypi/pandas@2.2.1",
+      "bom-ref": "pkg:pypi/pandas@2.2.1"
+    },
+    {
+      "type": "library",
+      "name": "pandas",
+      "version": "3.0.5",
+      "purl": "pkg:pypi/pandas@3.0.5",
+      "bom-ref": "pkg:pypi/pandas@3.0.5"
+    }
+  ],
   "vulnerabilities": [
     {
       "bom-ref": "urn:uuid:cfd264ee-c819-4623-85a4-04c613efdc68",
