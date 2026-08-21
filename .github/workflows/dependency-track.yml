@@ -42,6 +42,7 @@ jobs:
             curl \
               --silent \
               --show-error \
+              --dump-header dependency-track-vex-headers.txt \
               --output dependency-track-vex-response.txt \
               --write-out '%{http_code}' \
               --request POST \
@@ -53,6 +54,9 @@ jobs:
           )"
 
           echo "Dependency-Track VEX upload returned HTTP ${HTTP_STATUS}"
+          echo "--- response headers ---"
+          cat dependency-track-vex-headers.txt
+          echo "--- response body ---"
           cat dependency-track-vex-response.txt
           echo
 
@@ -68,5 +72,6 @@ jobs:
           path: |
             .dependency-track/vex.cdx.json
             dependency-track-vex-response.txt
+            dependency-track-vex-headers.txt
           if-no-files-found: warn
           retention-days: 14
