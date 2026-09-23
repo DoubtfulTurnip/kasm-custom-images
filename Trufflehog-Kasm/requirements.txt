@@ -3,4 +3,4 @@ requests==2.34.2
 pandas==3.0.5
 tldextract==5.3.2
 beautifulsoup4==4.15.0
-urllib3>=2.7.0 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.8.0 # not directly required, pinned by Snyk to avoid a vulnerability
