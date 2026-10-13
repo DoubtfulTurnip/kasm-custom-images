@@ -335,8 +335,10 @@ jobs:
             gh workflow run build-slasher.yml --ref "$UPDATED_REF"
             echo "Triggered: build-slasher.yml"
           fi
-          [ "${{ steps.bloodhound.outputs.update_available }}" == "true" ] && \
-            gh workflow run build-bloodhound.yml --ref "$UPDATED_REF" && echo "Triggered: build-bloodhound.yml"
+          if [ "${{ steps.bloodhound.outputs.update_available }}" == "true" ]; then
+            gh workflow run build-bloodhound.yml --ref "$UPDATED_REF"
+            echo "Triggered: build-bloodhound.yml"
+          fi
 
       - name: Create summary
         run: |
