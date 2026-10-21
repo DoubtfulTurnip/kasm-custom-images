@@ -16,7 +16,7 @@ RUN mkdir -p /epagneul && \
     git clone --branch 0.4.1 --depth 1 https://github.com/jurelou/epagneul.git /epagneul
 
 
-RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin && \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libnotify-bin && \
     rm -rf /var/lib/apt/lists/*
 
 # Smoke test: verify epagneul was cloned and git log works

@@ -12,6 +12,7 @@ WORKDIR $HOME
 # 1) Install OS packages, clone Slasher & seed backend/.env
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    ca-certificates \
     apt-transport-https \
     curl \
     git \
