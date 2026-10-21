@@ -11,7 +11,7 @@ WORKDIR $HOME
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    python3-pip python3-venv curl git tor \
+    ca-certificates python3-pip python3-venv curl git tor \
     build-essential libjpeg-dev zlib1g-dev libpng-dev && \
     rm -rf /var/lib/apt/lists/*
 

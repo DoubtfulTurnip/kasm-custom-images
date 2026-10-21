@@ -12,6 +12,7 @@ ENV STARTUPDIR /dockerstartup
 WORKDIR $HOME
 
 # Install curl, notifications, and the Docker Compose plugin.
+# ca-certificates is installed explicitly so rebuilds pick up the eMudhra intermediate revocation.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ca-certificates \

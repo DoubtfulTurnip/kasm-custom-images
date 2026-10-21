@@ -10,13 +10,14 @@ WORKDIR $HOME
 
 ######### Customize Container Here ###########
 
+# Refresh the CA bundle first so every HTTPS download below is verified against it.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libnotify-bin && \
+    rm -rf /var/lib/apt/lists/*
+
 # Create a working folder for BloodHound and download the docker-compose YAML file (pinned commit).
 RUN mkdir -p /bloodhound && \
     curl -fL "https://raw.githubusercontent.com/SpecterOps/bloodhound/93c4de19b5d4c4710f561113d6b7ab1e767234e3/examples/docker-compose/docker-compose.yml" \
     -o /bloodhound/docker-compose.yml
-
-RUN apt-get update && apt-get install -y --no-install-recommends libnotify-bin && \
-    rm -rf /var/lib/apt/lists/*
 
 # Smoke test: verify docker is available and compose file was downloaded
 RUN which docker && test -f /bloodhound/docker-compose.yml

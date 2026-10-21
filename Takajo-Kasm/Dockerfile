@@ -61,7 +61,7 @@ WORKDIR $HOME
 # 1) Install runtime dependencies, notifications & PCRE
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    curl unzip inotify-tools python3 python3-pip python3-venv \
+    ca-certificates curl unzip inotify-tools python3 python3-pip python3-venv \
     git libnotify-bin libpcre3 libpcre3-dev && \
     rm -rf /var/lib/apt/lists/*
 
