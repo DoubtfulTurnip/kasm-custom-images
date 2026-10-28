@@ -1,6 +1,6 @@
-streamlit==1.66.0
+streamlit==1.66.1
 requests==2.34.2
-pandas==3.0.6
+pandas==3.1.0
 tldextract==5.4.0
 beautifulsoup4==4.15.0
 urllib3>=2.8.0 # not directly required, pinned by Snyk to avoid a vulnerability
