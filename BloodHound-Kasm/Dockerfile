@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 # Create a working folder for BloodHound and download the docker-compose YAML file (pinned commit).
 RUN mkdir -p /bloodhound && \
-    curl -fL "https://raw.githubusercontent.com/SpecterOps/bloodhound/3d78dd940275d68048394544afbd3f799c74deb8/examples/docker-compose/docker-compose.yml" \
+    curl -fL "https://raw.githubusercontent.com/SpecterOps/bloodhound/c47f5b1f4dfb40d96bd491b5dbfe042dbc3f36b2/examples/docker-compose/docker-compose.yml" \
     -o /bloodhound/docker-compose.yml
 
 # Smoke test: verify docker is available and compose file was downloaded
