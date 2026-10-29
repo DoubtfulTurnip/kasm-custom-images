@@ -67,7 +67,7 @@ RUN apt-get update && \
 
 # 2) Install Hayabusa v3.9.0
 RUN curl -L \
-    https://github.com/Yamato-Security/hayabusa/releases/download/v4.2.0/hayabusa-4.2.0-lin-x64-gnu.zip \
+    https://github.com/Yamato-Security/hayabusa/releases/download/v4.3.1/hayabusa-4.3.1-lin-x64-gnu.zip \
     -o /tmp/hayabusa.zip && \
     unzip /tmp/hayabusa.zip -d /tmp/hayabusa && \
     mv /tmp/hayabusa/*lin-x64-gnu /usr/local/bin/hayabusa && \
