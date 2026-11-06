@@ -115,7 +115,7 @@ updates:
       - "python"
     ignore:
       - dependency-name: "pandas"
-        update-types: ["version-update:semver-major"]
+        versions: [">=3.0.0"]
     groups:
       pip-minor-patch:
         update-types: ["minor", "patch"]
