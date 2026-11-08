@@ -2,7 +2,7 @@ FROM kasmweb/ubuntu-noble-dind:1.19.0-rolling-daily
 
 USER root
 
-ARG SOCIAL_ANALYZER_COMMIT=1ba0905e00d054aab833eb3693739c354db09e0f
+ARG SOCIAL_ANALYZER_COMMIT=c585f429dcd08f390a47b5817946b880df0cc534
 ARG SOCIAL_ANALYZER_APP_IMAGE=ghcr.io/doubtfulturnip/socialanalyzer-app:latest
 LABEL org.opencontainers.image.source="https://github.com/qeeqbox/social-analyzer" \
       org.opencontainers.image.revision="${SOCIAL_ANALYZER_COMMIT}"
