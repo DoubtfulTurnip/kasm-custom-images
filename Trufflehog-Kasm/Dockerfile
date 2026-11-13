@@ -83,9 +83,9 @@ ENV PATH="/app/venv/bin:$PATH"
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt streamlit
 
-# ─── Install TruffleHog v3.99.8 as binary ──────────────────────────────────
+# ─── Install TruffleHog v3.99.9 as binary ──────────────────────────────────
 RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | \
-    sh -s -- -b /usr/local/bin v3.99.8
+    sh -s -- -b /usr/local/bin v3.99.9
 
 # ─── Cache wordlist at build time so Gobuster scans work offline ─────────────
 RUN mkdir -p /usr/share/wordlists && \
